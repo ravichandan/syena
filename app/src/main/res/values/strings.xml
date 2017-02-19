@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">Syena</string>
+    <string name="generate_code_text">Enter the displayed text in the device that you want to tag.</string>
+    <string name="scan_code_text">Enter the text from the other device to tag.</string>
+
+    <string-array name="interval">
+        <item>Sec</item>
+    </string-array>
+    <string-array name="time_interval">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>40</item>
+        <item>50</item>
+        <item>60</item>
+    </string-array>
+    <string name="choose_time_interval">Choose Time Interval</string>
+    <string name="defaultStatusMessage">Fetching location</string>
+    <string name="statusMessage">%1$s - %2$f meters away</string>
+    <string name="errorStatusMessage">Could not get the location</string>
+    <string name="defaultDetailedMessage">Fetching the detailed status...Fetching the detailed status...Fetching the detailed status...
+    Fetching the detailed status...Fetching the detailed status&#8230;</string>
+    <string name="detailedMessage">%1$s is %2$s and is %3$f meters away from your location. The latitude and longitude are %4$f,%5$f. We are still in development phase. Soon you will be able to navigate in real time. Please spare with us.</string>
+    <string name="pin_generate_text">A 4-digit pin has been generated and sent to you requesterEmail address. Please enter that pin in the following text box.</string>
+    <string name="server_url">http://192.168.1.5:8080/syena</string>
+    <string name="sendingText">Sending</string>
+    <string name="enter_text">Enter</string>
+    <string name="err_text_member_not_found">You are not registered yet</string>
+    <string name="err_text_member_not_active">Your login is not yet activated</string>
+
+    <string name="hp_Installation_Id">Installation-Id</string>
+    <string name="generating_tag_code">......</string>
+    <string name="email_qp">requesterEmail</string>
+    <string name="location_update_url">/member/location</string>
+    <string name="get_tag_code_url">/member/tag-code?requesterEmail=%1$s</string>
+    <string name="post_tag_url">/member/tag</string>
+    <string name="get_location_request_url">/member/location?requesterEmail=%1$s&amp;requester=%2$s</string>
+    <string name="err_text_system_error">System Error Occurred</string>
+    <string name="get_start_watch_url">/member/start-watch?requesterEmail=%1$s&amp;requester=%2$s</string>
+    <string name="get_stop_watch_url">/member/stop-watch?requesterEmail=%1$s&amp;requester=%2$s</string>
+    <string name="get_watchers_url">/member/get-watchers?email=%1$s</string>
+    <string name="post_watch_access_url">/member/watch-access</string>
+
+
+</resources>

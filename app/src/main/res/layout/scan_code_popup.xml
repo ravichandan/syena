@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:elevation="3dp"
+    android:background="@drawable/rounded_corners_layout_bg">
+<!-- #d3dbdc -->
+    <TextView
+        android:text="@string/scan_code_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:id="@+id/textView3"
+        android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_horizontal"
+        android:fontFamily="casual" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="27dp"
+        android:id="@+id/scanCodeText"
+        android:gravity="center_vertical|center_horizontal"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display3"
+        android:textStyle="normal|bold"
+        android:textColor="@android:color/black"
+        android:layout_below="@+id/textView3"
+        android:layout_centerHorizontal="true"
+        android:inputType="text"
+        android:backgroundTint="@android:color/white" />
+
+    <Button
+        android:text="Scan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/scanCodeOkButton"
+        android:layout_alignBaseline="@+id/scanCodeCancelButton"
+        android:layout_alignBottom="@+id/scanCodeCancelButton"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="76dp"
+        android:layout_marginStart="76dp"
+        android:focusable="false"/>
+
+    <Button
+        android:text="Cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/scanCodeCancelButton"
+        android:layout_marginRight="56dp"
+        android:layout_marginEnd="56dp"
+        android:layout_marginTop="45dp"
+        android:focusable="false"
+        android:layout_below="@+id/scanCodeText"
+        android:layout_alignParentEnd="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tagByCodeResponseLabel"
+        android:textStyle="normal|italic"
+        android:textColor="@android:color/holo_red_dark"
+        android:layout_below="@+id/scanCodeText"
+        android:layout_alignStart="@+id/scanCodeText"
+        android:layout_alignEnd="@+id/scanCodeText" />
+</RelativeLayout>

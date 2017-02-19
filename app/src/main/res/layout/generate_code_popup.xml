@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:elevation="3dp"
+    android:background="@drawable/rounded_corners_layout_bg"
+    >
+
+    <TextView
+        android:text="@string/generate_code_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:id="@+id/textView2"
+        android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_horizontal"
+        android:fontFamily="casual"/>
+
+    <Button
+        android:text="Close"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="44dp"
+        android:id="@+id/generateCodeCloseButton"
+        android:layout_below="@+id/codeText"
+        android:layout_centerHorizontal="true"
+        style="@style/Widget.AppCompat.Button" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="46dp"
+        android:id="@+id/codeText"
+        android:gravity="center_vertical|center_horizontal"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display3"
+        android:textStyle="normal|bold"
+        android:textColor="@android:color/black"
+        android:layout_below="@+id/textView2"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/rounded_corners_bg"
+        android:ems="4"
+        android:hint="@string/generating_tag_code"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/codeText"
+        android:layout_alignStart="@+id/codeText"
+        android:id="@+id/tagCodeResponseLabel"
+        android:layout_alignEnd="@+id/codeText"
+        android:textStyle="normal|italic"
+        android:textColor="@android:color/holo_red_dark"
+        android:fontFamily="serif" />
+</RelativeLayout>

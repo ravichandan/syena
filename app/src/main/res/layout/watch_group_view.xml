@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <LinearLayout
+        android:id="@+id/textViewLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_toEndOf="@+id/surfaceView"
+        android:layout_toRightOf="@+id/surfaceView"
+        android:layout_toStartOf="@+id/startWatchSwitch"
+        android:layout_toLeftOf="@+id/startWatchSwitch"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/displayNameText"
+            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+            android:textIsSelectable="false"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingLeft="?android:attr/expandableListPreferredItemPaddingLeft"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/smallStatusText"
+            android:textStyle="normal|italic"
+            android:maxLines="1"
+            android:paddingLeft="?android:attr/expandableListPreferredItemPaddingLeft"
+            />
+    </LinearLayout>
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/startWatchSwitch"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:focusable="false"
+        />
+
+    <SurfaceView
+        android:layout_width="15sp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="13dp"
+        android:id="@+id/surfaceView"
+        android:layout_alignParentTop="true"
+        android:focusable="false"/>
+</RelativeLayout>

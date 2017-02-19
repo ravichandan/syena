@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "807919736721",
+    "firebase_url": "https://syena-86782.firebaseio.com",
+    "project_id": "syena-86782",
+    "storage_bucket": "syena-86782.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:807919736721:android:04ad46625a5215d3",
+        "android_client_info": {
+          "package_name": "apps.chans.com.syena"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "807919736721-2po9tglvl0oo7ggamthu2e2tvfejgpko.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrrDAzx5tdovm733iTDLEzQRCpnL4Ick8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "807919736721-2po9tglvl0oo7ggamthu2e2tvfejgpko.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

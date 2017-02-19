@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:elevation="3dp"
+    android:theme="@style/Theme.FloatingWindow.Popup">
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textEmailAddress"
+        android:ems="10"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/textView5"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="59dp"
+        android:id="@+id/emailText"
+        android:hint="Email Address"
+        android:background="@drawable/rounded_corners_bg"
+        />
+
+    <TextView
+        android:text="Email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="38dp"
+        android:id="@+id/textView5"
+        android:layout_alignBaseline="@+id/emailText"
+        android:layout_alignBottom="@+id/emailText"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:text="[OR]"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/emailText"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="35dp"
+        android:id="@+id/textView6" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="phone"
+        android:ems="10"
+        android:layout_below="@+id/textView6"
+        android:layout_alignStart="@+id/emailText"
+        android:layout_marginTop="24dp"
+        android:id="@+id/phone"
+        android:background="@drawable/rounded_corners_bg"
+        android:hint="Phone Number"
+        android:textAlignment="textStart" />
+
+    <TextView
+        android:text="Phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView8"
+        android:layout_alignTop="@+id/phone"
+        android:layout_toStartOf="@+id/emailText" />
+
+    <Button
+        android:text="@string/enter_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/loginEnterButton"
+        android:textAlignment="center"
+        android:layout_below="@+id/phone"
+        android:layout_alignStart="@+id/phone"
+        android:layout_marginStart="41dp"
+        android:layout_marginTop="39dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/emailResponseLabel"
+        android:textStyle="normal|italic"
+        android:textColor="@android:color/holo_red_dark"
+        android:fontFamily="serif"
+        android:layout_below="@+id/emailText"
+        android:layout_alignEnd="@+id/emailText"
+        android:layout_alignStart="@+id/emailText" />
+</RelativeLayout>

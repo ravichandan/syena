@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/getWatchersItemMenu"
+        android:icon="@drawable/watchers_image"
+        android:title="Who's watching you"
+        app:title="Who's watching you"
+
+        app:showAsAction="ifRoom|collapseActionView"></item>
+</menu>

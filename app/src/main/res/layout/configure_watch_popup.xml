@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:backgroundTint="@android:color/holo_green_light">
+
+    <!-- android:entries="@array/time_interval"
+-->
+
+    <TextView
+        android:text="Select Interval"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginLeft="20dp"
+        android:id="@+id/interval"
+        android:layout_alignTop="@+id/timeSpinner"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"/>
+
+    <TextView
+        android:text="Safe Distance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/distanceTextView"
+        android:layout_below="@+id/timeSpinner"
+        android:layout_alignEnd="@+id/interval"
+        android:layout_alignRight="@+id/interval"
+        android:layout_marginTop="32dp" />
+
+    <TextView
+        android:text="Meters"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView4"
+        android:layout_alignBaseline="@+id/safeDistanceText"
+        android:layout_alignBottom="@+id/safeDistanceText"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginEnd="26dp"
+        android:layout_marginRight="26dp" />
+
+    <EditText
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/safeDistanceText"
+        android:layout_width="125dp"
+        android:layout_height="50dip"
+        android:layout_alignBaseline="@+id/distanceTextView"
+        android:layout_alignBottom="@+id/distanceTextView"
+        android:layout_toStartOf="@+id/textView4"
+        android:layout_toLeftOf="@+id/textView4"
+        android:layout_marginRight="11dp"
+        android:layout_marginEnd="11dp"
+        android:selectAllOnFocus="true"
+        android:focusableInTouchMode="true"
+        />
+
+    <Button
+        android:text="Ok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/okConfigure"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginLeft="40dp"
+        android:layout_below="@+id/safeDistanceText"
+        android:layout_alignStart="@+id/distanceTextView"
+        android:layout_alignLeft="@+id/distanceTextView"/>
+
+
+    <Button
+        android:text="Cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/cancelConfigure"
+        android:layout_alignBaseline="@+id/okConfigure"
+        android:layout_alignBottom="@+id/okConfigure"
+        android:layout_alignEnd="@+id/textView4"
+        android:layout_alignRight="@+id/textView4"
+        android:layout_marginEnd="31dp"
+        android:layout_marginRight="31dp"/>
+
+    <Spinner
+        android:layout_height="wrap_content"
+        android:id="@+id/timeSpinner"
+        android:layout_width="66dip"
+        android:prompt="@string/choose_time_interval"
+        android:spinnerMode="dialog"
+        android:entries="@array/time_interval"
+        android:layout_marginTop="40dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignEnd="@+id/safeDistanceText"
+        android:layout_alignRight="@+id/safeDistanceText"
+        android:layout_marginEnd="39dp"
+        android:layout_marginRight="39dp"/>
+
+    <Spinner
+        android:layout_width="175dip"
+        android:layout_height="wrap_content"
+        android:id="@+id/intervalSpinner"
+        android:entries="@array/interval"
+        android:prompt="@string/choose_time_interval"
+        android:spinnerMode="dialog"
+        android:layout_alignBottom="@+id/timeSpinner"
+        android:layout_toEndOf="@+id/timeSpinner"
+        android:layout_toRightOf="@+id/timeSpinner"
+        android:layout_alignTop="@+id/timeSpinner" />
+
+
+</RelativeLayout>
