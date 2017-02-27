@@ -4,72 +4,118 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Created by sitir on 13-02-2017.
  */
 
-public class GetWatchesResponse implements  Serializable{
+public class GetWatchesResponse implements Serializable {
 
-    private String email;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6732734458240496034L;
 
-    private List<GetWatchesResponse.Member> watchMembers;
+	private String email;
 
-    /**
-     * @return the watchMembers
-     */
-    public List<GetWatchesResponse.Member> getWatchMembers() {
-        return watchMembers;
-    }
+	private List<Entry> watchEntries;
 
-    /**
-     * @param watchMembers
-     *            the watchMembers to set
-     */
-    public void setWatchMembers(List<GetWatchesResponse.Member> watchMembers) {
-        this.watchMembers = watchMembers;
-    }
+	/**
+	 * @return the watchEntries
+	 */
+	public List<Entry> getWatchMembers() {
+		return watchEntries;
+	}
 
-    public void addEntry(String email, String name) {
-        if (watchMembers == null)
-            watchMembers = new ArrayList<>();
-        watchMembers.add(new GetWatchesResponse.Member(email, name));
+	/**
+	 * @param watchEntries
+	 *            the watchEntries to set
+	 */
+	public void setWatchMembers(List<Entry> watchMembers) {
+		this.watchEntries = watchMembers;
+	}
 
-    }
+	public void addEntry(String email, String name, boolean enabled) {
+		if (watchEntries == null)
+			watchEntries = new ArrayList<>();
+		watchEntries.add(new Entry(email, name, enabled));
 
-    public class Member implements Serializable {
-        /**
-         *
-         */
-        private static final long serialVersionUID = -8090556785484270675L;
-        String email;
-        String name;
+	}
 
-        Member(String email, String name) {
-            this.email = email;
-            this.name = name;
-        }
+	/**
+	 * @return the email
+	 */
+	public String getEmail() {
+		return email;
+	}
 
-        @Override
-        public String toString() {
-            // TODO Auto-generated method stub
-            return "{email: \"" + email + "\", name: " + name + "\"}";
-        }
+	/**
+	 * @param email
+	 *            the email to set
+	 */
+	public void setEmail(String email) {
+		this.email = email;
+	}
 
-        public String getEmail() {
-            return email;
-        }
+	public static class Entry implements Serializable {
+		/**
+		 *
+		 */
+		private static final long serialVersionUID = -8090556785484270675L;
+		@JsonProperty
+		String email;
+		@JsonProperty
+		String name;
+		@JsonProperty
+		boolean enabled;
 
-        public void setEmail(String email) {
-            this.email = email;
-        }
+		public Entry() {
+		}
 
-        public String getName() {
-            return name;
-        }
+		Entry(String email, String name, boolean enabled) {
+			this.email = email;
+			this.name = name;
+			this.enabled = enabled;
 
-        public void setName(String name) {
-            this.name = name;
-        }
-    }
+		}
+
+		@Override
+		public String toString() {
+			// TODO Auto-generated method stub
+			return "{email: \"" + email + "\", name: " + name + "\"}";
+		}
+
+		public String getEmail() {
+			return email;
+		}
+
+		public void setEmail(String email) {
+			this.email = email;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		/**
+		 * @return the enabled
+		 */
+		public boolean isEnabled() {
+			return enabled;
+		}
+
+		/**
+		 * @param enabled
+		 *            the enabled to set
+		 */
+		public void setEnabled(boolean enabled) {
+			this.enabled = enabled;
+		}
+	}
 
 }

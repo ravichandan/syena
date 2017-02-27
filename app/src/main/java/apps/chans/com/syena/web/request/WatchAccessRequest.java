@@ -2,26 +2,11 @@ package apps.chans.com.syena.web.request;
 
 public class WatchAccessRequest {
 
-	private String requester;
+	// private String requester;
 
 	private String target;
 
 	private boolean flag;
-
-	/**
-	 * @return the requester
-	 */
-	public String getRequester() {
-		return requester;
-	}
-
-	/**
-	 * @param requester
-	 *            the requester to set
-	 */
-	public void setRequester(String requester) {
-		this.requester = requester;
-	}
 
 	/**
 	 * @return the target

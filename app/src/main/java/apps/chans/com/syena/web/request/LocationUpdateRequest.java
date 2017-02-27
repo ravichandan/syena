@@ -14,15 +14,15 @@ public class LocationUpdateRequest implements Serializable{
 	private double altitude;
 
 	/**
-	 * @return the REQUESTER
+	 * @return the QP_REQUESTER
 	 */
 	public String getRequester() {
 		return requester;
 	}
 
 	/**
-	 * @param REQUESTER
-	 *            the REQUESTER to set
+	 * @param QP_REQUESTER
+	 *            the QP_REQUESTER to set
 	 */
 	public void setRequester(String requester) {
 		this.requester = requester;

@@ -10,6 +10,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -65,10 +66,9 @@ import apps.chans.com.syena.web.request.PinValidationRequest;
 import apps.chans.com.syena.web.response.EmailVerifyResponse;
 import apps.chans.com.syena.web.response.PinValidationResponse;
 
-import static apps.chans.com.syena.datasource.DataSource.EMAIL_VERIFY_URL;
-import static apps.chans.com.syena.datasource.DataSource.PIN_VERIFY_URL;
 import static apps.chans.com.syena.datasource.DataSource.latitude;
 import static apps.chans.com.syena.datasource.DataSource.longitude;
+import static apps.chans.com.syena.datasource.DataSource.requestTimeOut;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -87,10 +87,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         queue = Volley.newRequestQueue(this);
-        if (dataSource == null) {
+        Log.d(LOG_TAG, "Starting MainActivity, dataSource: " + dataSource);
+
+        if (this.dataSource == null) {
             dataSource = new DataSource(this);
             loggedInAlready = false;
         }
+        Log.d(LOG_TAG, "Starting MainActivity, loggedInAlready: " + loggedInAlready);
         if (loggedInAlready) {
             welcome();
         } else {
@@ -121,7 +124,8 @@ public class MainActivity extends AppCompatActivity {
     private void autoLogin(String email) {
         final ObjectMapper mapper = new ObjectMapper();
         Log.d("MainActivity", "In autoLogin :   " + email);
-        StringRequest jsonObjectRequest = new StringRequest(Request.Method.GET, getString(R.string.server_url) + EMAIL_VERIFY_URL + "?email=" + email, new Response.Listener<String>() {
+        String url = getString(R.string.server_url) + getString(R.string.get_or_create_url, email);
+        StringRequest jsonObjectRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d("EmailVerifyResponse", response);
@@ -131,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     Log.d("EmailVerifyResponse", getStackTrace(e));
                     dataSource.eraseEmailData();
-                    recreate();
+                    //recreate();
                     return;
                 }
                 if (null == verifyResponse) {
@@ -171,21 +175,23 @@ public class MainActivity extends AppCompatActivity {
                         case EmailVerifyResponse.ERROR:
                         default:
                             dataSource.eraseEmailData();
-                            recreate();
-                            break;
+                            //recreate();
+                            return;
                     }
                 } catch (Exception e) {
                     dataSource.eraseEmailData();
-                    recreate();
+                    //recreate();
+                    return;
                 }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 error.printStackTrace();
-                Log.d("EmailVerifyResponse-Err", "Error occured " + error.getLocalizedMessage());
+                Log.d("EmailVerifyResponse-Err", "Error occured ", error);
                 dataSource.eraseEmailData();
-                recreate();
+                //recreate();
+                return;
             }
         }) {
             @Override
@@ -199,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(LOG_TAG, "Sending autologin request for email");
 
         jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
-                60000,
+                requestTimeOut,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         queue.add(jsonObjectRequest);
@@ -211,6 +217,7 @@ public class MainActivity extends AppCompatActivity {
         final View loginView = getLayoutInflater().inflate(R.layout.login_popup, null);
         final PopupWindow popupWindow = new PopupWindow(loginView, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
         popupWindow.showAtLocation(loginView, Gravity.CENTER, 0, 0);
+        popupWindow.setOutsideTouchable(false);
         final Button pinSubmitButton = (Button) loginView.findViewById(R.id.loginEnterButton);
         pinSubmitButton.setTag(loginView);
         pinSubmitButton.setOnClickListener(new View.OnClickListener() {
@@ -231,8 +238,9 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("Email Text : " + emailText.getText());
                 //TODO validate email
                 final ObjectMapper mapper = new ObjectMapper();
-
-                StringRequest jsonObjectRequest = new StringRequest(Request.Method.GET, getString(R.string.server_url) + EMAIL_VERIFY_URL + "?email=" + emailText.getText().toString(), new Response.Listener<String>() {
+                String url = getString(R.string.server_url) + getString(R.string.get_or_create_url, emailText.getText().toString());
+                Log.d("URL : ", url);
+                StringRequest jsonObjectRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d("EmailVerifyResponse", response);
@@ -321,7 +329,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         error.printStackTrace();
-                        Log.d("EmailVerifyResponse-Err", "Error occured " + error.getLocalizedMessage());
+                        Log.d("EmailVerifyResponse-Err", "Error occured ", error);
                         TextView emailResponseLabelTextView = (TextView) loginView.findViewById(R.id.emailResponseLabel);
                         emailResponseLabelTextView.setText("System error occurred. Please try again");
                         pinSubmitButton.setText(getString(R.string.enter_text));
@@ -329,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
                 jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
-                        60000,
+                        requestTimeOut,
                         DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                         DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
                 queue.add(jsonObjectRequest);
@@ -371,6 +379,7 @@ public class MainActivity extends AppCompatActivity {
         final View loginView = getLayoutInflater().inflate(pin_popup, null);
         final PopupWindow popupWindow = new PopupWindow(loginView, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, true);
         popupWindow.showAtLocation(loginView, Gravity.CENTER, 0, 0);
+        popupWindow.setOutsideTouchable(false);
         final Button pinSubmitButton = (Button) loginView.findViewById(R.id.pinSubmitButton);
         pinSubmitButton.setTag(loginView);
         pinSubmitButton.setOnClickListener(new View.OnClickListener() {
@@ -390,7 +399,6 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("pinText Text : " + pinText.getText());
                 //TODO validate email & pin
                 PinValidationRequest request = new PinValidationRequest();
-                request.setEmail(email);
                 request.setPin(pinText.getText().toString());
                 final ObjectMapper mapper = new ObjectMapper();
                 JSONObject jsonReq = null;
@@ -405,10 +413,11 @@ public class MainActivity extends AppCompatActivity {
                     pinSubmitButton.setEnabled(true);
                     return;
                 }
+                String url = getString(R.string.server_url) + getString(R.string.pin_verify_url, email);
 
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                         Request.Method.POST,
-                        getString(R.string.server_url) + PIN_VERIFY_URL,
+                        url,
                         jsonReq,
                         new Response.Listener<JSONObject>() {
                             @Override
@@ -499,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 };
                 jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
-                        60000,
+                        requestTimeOut,
                         DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                         DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
                 queue.add(jsonObjectRequest);
@@ -539,16 +548,25 @@ public class MainActivity extends AppCompatActivity {
             dataSource.currentMember = new Member(dataSource.getEmail());
 
         setContentView(R.layout.activity_main);
-        Toolbar toolbar= (Toolbar) findViewById(R.id.mainToolbar);
-        setSupportActionBar(toolbar);
         activity_main = (SwipeRefreshLayout) findViewById(R.id.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.mainToolbar);
+        setSupportActionBar(toolbar);
+        activity_main.setColorSchemeResources(R.color.blue, R.color.green, R.color.orange);
         activity_main.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if (dataSource != null)
-                    dataSource.getWatchList(true);
-                if (adapter != null)
-                    adapter.notifyDataSetChanged();
+                new Handler().postDelayed(new Runnable() {
+                                              @Override
+                                              public void run() {
+                                                  if (dataSource != null)
+                                                      dataSource.getWatchList(true);
+                                                  if (adapter != null)
+                                                      adapter.notifyDataSetChanged();
+                                              }
+                                          }
+
+                        , 2000);
+
             }
         });
         expandableListView = (ExpandableListView) this.findViewById(R.id.expandableListView);
@@ -586,22 +604,25 @@ public class MainActivity extends AppCompatActivity {
         Log.d("DEBUG", "Last known location network provider " + lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
 
 
-        lm.requestLocationUpdates(provider, 400, 1, ll);
+        lm.requestLocationUpdates(provider, 400, 0.01f, ll);
 //        expandableListView.setChoiceMode(ExpandableListView.CHOICE_MODE_MULTIPLE);
+        dataSource.getWatchList(true);
 
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        boolean result= false;
-        switch(item.getItemId()){
+        boolean result = false;
+        switch (item.getItemId()) {
             case R.id.getWatchersItemMenu:
                 //Call server to get watchers
-                Intent intent = new Intent(this,WatchersActivity.class);
+                Intent intent = new Intent(this, WatchersActivity.class);
                 startActivity(intent);
-                result=true; break;
+                result = true;
+                break;
 
-            default: result= super.onOptionsItemSelected(item);
+            default:
+                result = super.onOptionsItemSelected(item);
         }
         return result;
 
@@ -609,7 +630,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.toolbar_menu,menu);
+        getMenuInflater().inflate(R.menu.toolbar_menu, menu);
 
         return true;
     }
@@ -700,6 +721,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void notifyWatchesDataSet() {
+        Log.d(LOG_TAG, "Notifying dataset for watches");
+
+        adapter.notifyDataSetChanged();
+    }
+
+    public void stopSwipeRefresh() {
+        Log.d(LOG_TAG, "Stopping refreshing of swipeview");
+        activity_main.setRefreshing(false);
+    }
+
     private class MyLocationListener implements LocationListener {
 
         public MyLocationListener() {
@@ -711,6 +743,16 @@ public class MainActivity extends AppCompatActivity {
             Log.d(LOG_TAG, "onLocationChanged : " + location.getLatitude() + ", " + location.getLongitude() + ", " + location.getAltitude());
             latitude = location.getLatitude();
             longitude = location.getLongitude();
+
+            // Intent email = new Intent(Intent.ACTION_SEND);
+            // email.putExtra(Intent.EXTRA_EMAIL, new String[]{"chandan.ravi1987@gmail.com"});
+            //email.putExtra(Intent.EXTRA_SUBJECT, "Location changed");
+            //  email.putExtra(Intent.EXTRA_TEXT, "location changed, latitude : " + latitude + ", longitude : " + longitude + ", altitude : " + location.getAltitude());
+
+            //need this to prompts email client only
+            // email.setType("message/rfc822");
+
+            // startActivity(Intent.createChooser(email, "Choose an Email client :"));
 
             dataSource.updateLocation(latitude, longitude, location.getAltitude());
         }

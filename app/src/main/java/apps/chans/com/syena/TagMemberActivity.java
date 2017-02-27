@@ -138,15 +138,14 @@ public class TagMemberActivity extends AppCompatActivity {
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(LOG_TAG, "In setOnClickListener********************************"+dataSource.getEmail());
+                Log.d(LOG_TAG, "In setOnClickListener********************************" + dataSource.getEmail());
 
                 //tagMemberWithCode(scanCodeText);
                 submitButton.setEnabled(false);
                 TagByCodeRequest tagByCodeRequest = new TagByCodeRequest();
-                tagByCodeRequest.setEmail(dataSource.getEmail());
                 tagByCodeRequest.setTagCode(scanCodeText.getText().toString());
-                final String url = getString(R.string.post_tag_url);
-                dataSource.sendJsonRequest(Request.Method.POST, getString(R.string.post_tag_url), tagByCodeRequest, new Response.Listener<JSONObject>() {
+                final String url = getString(R.string.post_tag_url, dataSource.getEmail());
+                dataSource.sendJsonRequest(Request.Method.POST, url, tagByCodeRequest, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
 

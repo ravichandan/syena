@@ -7,7 +7,6 @@ package apps.chans.com.syena.web.request;
 public class PinValidationRequest {
 
 	private String pin;
-	private String requester;
 
 	public String getPin() {
 		return pin;
@@ -15,14 +14,6 @@ public class PinValidationRequest {
 
 	public void setPin(String pin) {
 		this.pin = pin;
-	}
-
-	public String getRequester() {
-		return requester;
-	}
-
-	public void setRequester(String requester) {
-		this.requester = requester;
 	}
 
 }

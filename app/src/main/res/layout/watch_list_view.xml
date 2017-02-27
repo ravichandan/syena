@@ -19,4 +19,5 @@
         android:src="@mipmap/config_icon"
         android:onClick="configureWatch"
         />
+
 </LinearLayout>

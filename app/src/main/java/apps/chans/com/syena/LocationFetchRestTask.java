@@ -15,8 +15,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 
 import org.codehaus.jackson.map.ObjectMapper;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -27,7 +25,6 @@ import java.util.Map;
 import apps.chans.com.syena.datasource.DataSource;
 import apps.chans.com.syena.entities.Watch;
 import apps.chans.com.syena.view.ExpandableAdapter;
-import apps.chans.com.syena.web.request.LocationRequest;
 import apps.chans.com.syena.web.response.LocationResponse;
 
 /**

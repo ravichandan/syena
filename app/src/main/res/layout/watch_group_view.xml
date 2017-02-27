@@ -40,13 +40,14 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:focusable="false"
-        />
+        android:gravity="center_vertical"
+        android:foregroundGravity="center_vertical" />
 
     <SurfaceView
         android:layout_width="15sp"
         android:layout_height="match_parent"
-        android:layout_marginTop="13dp"
         android:id="@+id/surfaceView"
+        android:focusable="false"
         android:layout_alignParentTop="true"
-        android:focusable="false"/>
+        android:layout_alignParentStart="true" />
 </RelativeLayout>

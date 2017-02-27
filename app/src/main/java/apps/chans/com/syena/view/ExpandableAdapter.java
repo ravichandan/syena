@@ -13,6 +13,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -35,6 +36,8 @@ import apps.chans.com.syena.R;
 import apps.chans.com.syena.datasource.DataSource;
 import apps.chans.com.syena.entities.Watch;
 import apps.chans.com.syena.entities.WatchStatus;
+
+import static apps.chans.com.syena.datasource.DataSource.requestTimeOut;
 
 
 /**
@@ -132,7 +135,8 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
 
                         // Start the watch instance.
                         Log.d(LOG_TAG, "Requesting startWatch for " + watch1.getTarget().getEmail());
-                        StringRequest startWatchRequest = new StringRequest(Request.Method.POST, context.getString(R.string.server_url) + context.getString(R.string.get_start_watch_url, watch1.getTarget().getEmail(), watch1.getSource().getEmail()),
+                        String url = context.getString(R.string.server_url) + context.getString(R.string.get_start_watch_url, watch1.getSource().getEmail(), watch1.getTarget().getEmail());
+                        StringRequest startWatchRequest = new StringRequest(Request.Method.POST, url,
                                 new Response.Listener<String>() {
                                     @Override
                                     public void onResponse(String response) {
@@ -140,6 +144,7 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
                                 }, new Response.ErrorListener() {
                             @Override
                             public void onErrorResponse(VolleyError error) {
+                                Log.d(LOG_TAG, "Got error from server while starting watch ", error);
                                 Log.d(LOG_TAG, "Got error from server : " + error.networkResponse.statusCode + ", Not-modified: " + error.networkResponse.notModified);
                                 adapter.updateWatchErrorStatus(watch1);
                                 adapter.notifyDataSetChanged();
@@ -150,12 +155,13 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
                             protected Response<String> parseNetworkResponse(NetworkResponse response) {
                                 if (response.statusCode >= 200 && response.statusCode < 300) {
                                     Log.d(LOG_TAG, "Starting async task for watch : source: " + watch1.getSource().getEmail() + ", target: " + watch1.getTarget().getEmail());
-                                    LocationFetchRestTask rt = new LocationFetchRestTask(adapter, queue, watch1, context.getString(R.string.server_url) + context.getString(R.string.get_location_request_url, watch1.getTarget().getEmail(), watch1.getSource().getEmail()));
+                                    String url = context.getString(R.string.server_url) + context.getString(R.string.get_location_request_url, watch1.getSource().getEmail(), watch1.getTarget().getEmail());
+                                    LocationFetchRestTask rt = new LocationFetchRestTask(adapter, queue, watch1, url);
                                     rt.execute();
                                     return Response.success(null, HttpHeaderParser.parseCacheHeaders(response));
 
                                 } else {
-                                    Log.d(LOG_TAG,"Status code is not success. Returning error response");
+                                    Log.d(LOG_TAG, "Status code is not success. Returning error response");
                                     return Response.error(new VolleyError(response));
 
                                 }
@@ -168,11 +174,16 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
                                 return headers;
                             }
                         };
+                        startWatchRequest.setRetryPolicy(new DefaultRetryPolicy(
+                                requestTimeOut,
+                                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
                         queue.add(startWatchRequest);
                     } else {
                         smallStatusText.setText("");
                         Log.d(LOG_TAG, "Requesting stopWatch for " + watch1.getTarget().getEmail());
-                        StringRequest startWatchRequest = new StringRequest(Request.Method.POST, context.getString(R.string.server_url) + context.getString(R.string.get_stop_watch_url, watch1.getTarget().getEmail(), watch1.getSource().getEmail()),
+                        String url = context.getString(R.string.server_url) + context.getString(R.string.get_stop_watch_url, watch1.getSource().getEmail(), watch1.getTarget().getEmail());
+                        StringRequest stopWatchRequest = new StringRequest(Request.Method.POST, url,
                                 new Response.Listener<String>() {
                                     @Override
                                     public void onResponse(String response) {
@@ -190,14 +201,15 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
                             protected Response<String> parseNetworkResponse(NetworkResponse response) {
                                 if (response.statusCode >= 200 && response.statusCode < 300) {
                                     Log.d(LOG_TAG, "Starting async task for watch : source: " + watch1.getSource().getEmail() + ", target: " + watch1.getTarget().getEmail());
-                                    LocationFetchRestTask rt = new LocationFetchRestTask(adapter, queue, watch1, context.getString(R.string.server_url) + context.getString(R.string.get_location_request_url, watch1.getTarget().getEmail(), watch1.getSource().getEmail()));
-                                    rt.execute();
+                                    //LocationFetchRestTask rt = new LocationFetchRestTask(adapter, queue, watch1, context.getString(R.string.server_url) + context.getString(R.string.get_location_request_url, watch1.getTarget().getEmail(), watch1.getSource().getEmail()));
+                                    //rt.execute();
                                     return Response.success(null, HttpHeaderParser.parseCacheHeaders(response));
                                 } else {
-                                    Log.d(LOG_TAG,"Status code is not success. Returning error response");
+                                    Log.d(LOG_TAG, "Status code is not success. Returning error response");
                                     return Response.error(new VolleyError(response));
                                 }
                             }
+
                             @Override
                             public Map<String, String> getHeaders() throws AuthFailureError {
                                 Map<String, String> headers = new HashMap<>();
@@ -205,12 +217,16 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
                                 return headers;
                             }
                         };
-                        queue.add(startWatchRequest);
+                        stopWatchRequest.setRetryPolicy(new DefaultRetryPolicy(
+                                requestTimeOut,
+                                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+                        queue.add(stopWatchRequest);
                     }
 
                 }
             });
-            System.out.println("2***************In getGroupVIew , groupPosition:" + groupPosition + ", watchList.get(groupPosition):" + MainActivity.dataSource.getWatchList().get(groupPosition));
+            Log.d(LOG_TAG, "2***************In getGroupVIew , groupPosition:" + groupPosition + ", watchList.get(groupPosition):" + MainActivity.dataSource.getWatchList().get(groupPosition));
 
         } else {
             startSwitch = (Switch) convertView.findViewById(R.id.startWatchSwitch);
@@ -291,22 +307,23 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
             watch.getWatchStatus().setDescription(
                     context.getResources().getString(
                             R.string.detailedMessage,
-                            watch.getTarget().getDisplayName(),
+                            watch.getTarget().getDisplayName() == null ? "" : watch.getTarget().getDisplayName(),
                             "At Border",
                             distance,
                             watch.getTarget().getLatitude(),
-                            watch.getTarget().getLongitude()));
+                            watch.getTarget().getLongitude(),
+                            watch.getTarget().getAltitude()));
         } else if (distance > allowedDistance) {
             watch.getWatchStatus().setCode(WatchStatus.OUT_OF_RANGE);
             watch.getWatchStatus().setMessage(context.getResources().getString(R.string.statusMessage, "Out Of Range", distance));
             watch.getWatchStatus().setDescription(
                     context.getResources().getString(
                             R.string.detailedMessage,
-                            watch.getTarget().getDisplayName(),
-                            "Out Of Range",
+                            watch.getTarget().getDisplayName() == null ? "" : watch.getTarget().getDisplayName(), "Out Of Range",
                             distance,
                             watch.getTarget().getLatitude(),
-                            watch.getTarget().getLongitude()));
+                            watch.getTarget().getLongitude(),
+                            watch.getTarget().getAltitude()));
 
         } else {
             watch.getWatchStatus().setCode(WatchStatus.IN_RANGE);
@@ -314,11 +331,11 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
             watch.getWatchStatus().setDescription(
                     context.getResources().getString(
                             R.string.detailedMessage,
-                            watch.getTarget().getDisplayName(),
-                            "In Range",
+                            watch.getTarget().getDisplayName() == null ? "" : watch.getTarget().getDisplayName(), "In Range",
                             distance,
                             watch.getTarget().getLatitude(),
-                            watch.getTarget().getLongitude()));
+                            watch.getTarget().getLongitude(),
+                            watch.getTarget().getAltitude()));
 
         }
     }

@@ -1,6 +1,5 @@
 package apps.chans.com.syena.datasource;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -50,20 +49,20 @@ public class DataSource {
     public static double latitude = 0.0;
     public static double longitude = 0.0;
     public static double altitude = 0.0;
-    public static String EMAIL_VERIFY_URL = "/member/get-or-create";
-    public static String PIN_VERIFY_URL = "/member/add";
+    public static int requestTimeOut = 600000;
+    private static String LOG_TAG = DataSource.class.getSimpleName();
     public Member currentMember;
     public Member selectedMember;
     public List<Watch> watchList = new ArrayList<Watch>();
-    private Context context;
+    private MainActivity mainActivity;
     private String email;
     private String installationId;
     private GetWatchersResponse watchers;
 
-    public DataSource(Context context) {
-        this.context = context;
+    public DataSource(MainActivity mainActivity) {
+        this.mainActivity = mainActivity;
         //this.currentMember = new Member(email);
-        File directory = context.getFilesDir();
+        File directory = mainActivity.getFilesDir();
         File emailFile = new File(directory, "Email-Id");
         File installationIdFile = new File(directory, "Installation-Id");
         String email = null;
@@ -116,12 +115,14 @@ public class DataSource {
 
     private void refreshWatchList() {
         final ObjectMapper mapper = new ObjectMapper();
+        String url = mainActivity.getString(R.string.server_url) + mainActivity.getString(R.string.get_watches_url, email);
         StringRequest jsonObjectRequest = new StringRequest(
                 Request.Method.GET,
-                context.getString(R.string.server_url) + EMAIL_VERIFY_URL + "?email=" + email,
+                url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
+                        mainActivity.stopSwipeRefresh();
                         Log.d("GetWatchesResponse", response);
                         GetWatchesResponse getWatchesResponse = null;
                         try {
@@ -137,27 +138,38 @@ public class DataSource {
                             Log.d("GetWatchesResponse", "Empty response received from server");
                             return;
                         }
-
+                        getWatchList().clear();
                         Member source = new Member(email);
-                        for (GetWatchesResponse.Member member : getWatchesResponse.getWatchMembers()) {
-                            Member target = new Member(member.getEmail(), member.getName());
+                        for (GetWatchesResponse.Entry entry : getWatchesResponse.getWatchMembers()) {
+                            Log.d(LOG_TAG, "Entry: " + entry.getEmail());
+                            Member target = new Member(entry.getEmail(), entry.getName());
                             Watch watch = new Watch(source, target);
-                            getWatchList(false).add(watch);
+                            getWatchList().add(watch);
                         }
-
+                        mainActivity.stopSwipeRefresh();
+                        mainActivity.notifyWatchesDataSet();
 
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        mainActivity.stopSwipeRefresh();
                         error.printStackTrace();
                         Log.d("EmailVerifyResponse-Err", "Error occured " + error.getLocalizedMessage());
 
                     }
-                });
+                }) {
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                headers.put(mainActivity.getString(R.string.hp_Installation_Id), getInstallationId());
+                return headers;
+            }
+        };
         jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
-                60000,
+                requestTimeOut,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         MainActivity.queue.add(jsonObjectRequest);
@@ -200,9 +212,10 @@ public class DataSource {
     }
 
     public void updateLocation(double latitude, double longitude, double altitude) {
-        String url = context.getString(R.string.server_url) + context.getString(R.string.location_update_url);
+        Log.d(LOG_TAG, "Sending location update request to server");
+        String url = mainActivity.getString(R.string.server_url) + mainActivity.getString(R.string.location_update_url);
         LocationUpdateRequest request = new LocationUpdateRequest();
-        request.setEmail(email);
+        request.setRequester(email);
         request.setLatitude(latitude);
         request.setLongitude(longitude);
         request.setAltitude(altitude);
@@ -227,8 +240,20 @@ public class DataSource {
                             if (error != null && error.networkResponse != null)
                                 Log.d("ResponseStatus:", "LocationUpdate Response status code : " + error.networkResponse.statusCode);
                         }
-                    });
+                    }) {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
 
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put(mainActivity.getString(R.string.hp_Installation_Id), getInstallationId());
+                    return headers;
+                }
+            };
+            jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
+                    requestTimeOut,
+                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            MainActivity.queue.add(jsonObjectRequest);
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (JsonProcessingException e) {
@@ -255,7 +280,7 @@ public class DataSource {
     }
 
     public void eraseEmailData() {
-        File directory = context.getFilesDir();
+        File directory = mainActivity.getFilesDir();
         File emailFile = new File(directory, "Email-Id");
         emailFile.delete();
         if (emailFile.exists()) {
@@ -283,7 +308,7 @@ public class DataSource {
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 method,
-                context.getString(R.string.server_url) + url,
+                mainActivity.getString(R.string.server_url) + url,
                 jsonReq,
                 responseListener,
                 errorListener) {
@@ -291,12 +316,12 @@ public class DataSource {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> headers = new HashMap<>();
-                headers.put(context.getString(R.string.hp_Installation_Id), getInstallationId());
+                headers.put(mainActivity.getString(R.string.hp_Installation_Id), getInstallationId());
                 return headers;
             }
         };
         jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
-                60000,
+                requestTimeOut,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         MainActivity.queue.add(jsonObjectRequest);
@@ -305,19 +330,19 @@ public class DataSource {
     public void sendStringRequest(int method, final String url, Response.Listener<String> responseListener, Response.ErrorListener errorListener) {
         StringRequest jsonObjectRequest = new StringRequest(
                 method,
-                context.getString(R.string.server_url) + url,
+                mainActivity.getString(R.string.server_url) + url,
                 responseListener,
                 errorListener) {
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> headers = new HashMap<>();
-                headers.put(context.getString(R.string.hp_Installation_Id), getInstallationId());
+                headers.put(mainActivity.getString(R.string.hp_Installation_Id), getInstallationId());
                 return headers;
             }
         };
         jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
-                60000,
+                requestTimeOut,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         MainActivity.queue.add(jsonObjectRequest);
@@ -327,7 +352,7 @@ public class DataSource {
         Member target = new Member(targetEmail);
         if (currentMember.getWatchMap().get(target) == null) {
             Watch w = new Watch(currentMember, target);
-            w.getWatchStatus().setDescription(context.getString(R.string.defaultDetailedMessage));
+            w.getWatchStatus().setDescription(mainActivity.getString(R.string.defaultDetailedMessage));
             currentMember.getWatchMap().put(target, w);
         }
 

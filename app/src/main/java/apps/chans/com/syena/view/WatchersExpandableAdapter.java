@@ -127,13 +127,12 @@ public class WatchersExpandableAdapter extends BaseExpandableListAdapter {
                     Log.d(LOG_TAG, "Switch is un-checked");
                 }
                 WatchAccessRequest watchAccessRequest = new WatchAccessRequest();
-                watchAccessRequest.setRequesterEmail(DataSource.instance.getEmail());
-                watchAccessRequest.setTargetEmail(watcher.getEmail());
+                watchAccessRequest.setTarget(watcher.getEmail());
                 watchAccessRequest.setFlag(isChecked);
                 ObjectMapper mapper = new ObjectMapper();
                 try {
                     JSONObject jsonObject = new JSONObject(mapper.writeValueAsString(watchAccessRequest));
-                    String url = watchersActivity.getString(R.string.server_url) + watchersActivity.getString(R.string.post_watch_access_url);
+                    String url = watchersActivity.getString(R.string.server_url) + watchersActivity.getString(R.string.post_watch_access_url,DataSource.instance.getEmail());
                     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject, new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {

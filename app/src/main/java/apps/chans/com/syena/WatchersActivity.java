@@ -1,7 +1,9 @@
 package apps.chans.com.syena;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -31,6 +33,7 @@ import apps.chans.com.syena.web.response.GetWatchersResponse;
 
 public class WatchersActivity extends AppCompatActivity {
     private String LOG_TAG = getClass().getSimpleName();
+    private SwipeRefreshLayout watchersSwipeView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -41,7 +44,25 @@ public class WatchersActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
-        String url = getString(R.string.server_url) + getString(R.string.get_watchers_url,DataSource.instance.getEmail());
+        watchersSwipeView = (SwipeRefreshLayout) findViewById(R.id.watchersSwipeView);
+        watchersSwipeView.setColorSchemeResources(R.color.blue, R.color.green, R.color.orange);
+        watchersSwipeView.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        getDataFromServer();
+                    }
+                }, 2000);
+            }
+        });
+        getDataFromServer();
+
+    }
+
+    public void getDataFromServer() {
+        String url = getString(R.string.server_url) + getString(R.string.get_watchers_url, DataSource.instance.getEmail());
         Log.d(LOG_TAG, "URL : " + url);
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
@@ -59,14 +80,18 @@ public class WatchersActivity extends AppCompatActivity {
 
                 } catch (IOException e) {
                     Log.d(LOG_TAG, "Exception Occurred, ", e);
+                } finally {
+                    watchersSwipeView.setRefreshing(false);
                 }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(LOG_TAG, "Error response received, ", error);
+                watchersSwipeView.setRefreshing(false);
+
             }
-        }){
+        }) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> headers = new HashMap<>();
@@ -79,7 +104,6 @@ public class WatchersActivity extends AppCompatActivity {
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         MainActivity.queue.add(stringRequest);
-
 
     }
 

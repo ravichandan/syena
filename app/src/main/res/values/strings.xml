@@ -19,32 +19,41 @@
         <item>50</item>
         <item>60</item>
     </string-array>
+
+    <!--text messages-->
     <string name="choose_time_interval">Choose Time Interval</string>
     <string name="defaultStatusMessage">Fetching location</string>
     <string name="statusMessage">%1$s - %2$f meters away</string>
     <string name="errorStatusMessage">Could not get the location</string>
     <string name="defaultDetailedMessage">Fetching the detailed status...Fetching the detailed status...Fetching the detailed status...
     Fetching the detailed status...Fetching the detailed status&#8230;</string>
-    <string name="detailedMessage">%1$s is %2$s and is %3$f meters away from your location. The latitude and longitude are %4$f,%5$f. We are still in development phase. Soon you will be able to navigate in real time. Please spare with us.</string>
+    <string name="detailedMessage">%1$s is %2$s and is %3$f meters away from your location. The latitude, longitude and altitude are %4$f,%5$f and %6$f respectively.</string>
     <string name="pin_generate_text">A 4-digit pin has been generated and sent to you requesterEmail address. Please enter that pin in the following text box.</string>
-    <string name="server_url">http://192.168.1.5:8080/syena</string>
     <string name="sendingText">Sending</string>
     <string name="enter_text">Enter</string>
     <string name="err_text_member_not_found">You are not registered yet</string>
     <string name="err_text_member_not_active">Your login is not yet activated</string>
 
+    <!--params-->
     <string name="hp_Installation_Id">Installation-Id</string>
-    <string name="generating_tag_code">......</string>
-    <string name="email_qp">requesterEmail</string>
+    <string name="generating_tag_code">..</string>
+    <string name="email_qp">requester</string>
+
+    <!--urls-->
+    <string name="server_url">http://117.206.233.185:7979/syena-system</string>
+    <string name="get_or_create_url">/member/get-or-create?requester=%1$s</string>
     <string name="location_update_url">/member/location</string>
-    <string name="get_tag_code_url">/member/tag-code?requesterEmail=%1$s</string>
-    <string name="post_tag_url">/member/tag</string>
-    <string name="get_location_request_url">/member/location?requesterEmail=%1$s&amp;requester=%2$s</string>
+    <string name="get_tag_code_url">/member/tag-code?requester=%1$s</string>
+    <string name="post_tag_url">/member/tag?requester=%1$s</string>
+    <string name="get_location_request_url">/member/get-location?requester=%1$s&amp;target=%2$s</string>
     <string name="err_text_system_error">System Error Occurred</string>
-    <string name="get_start_watch_url">/member/start-watch?requesterEmail=%1$s&amp;requester=%2$s</string>
-    <string name="get_stop_watch_url">/member/stop-watch?requesterEmail=%1$s&amp;requester=%2$s</string>
-    <string name="get_watchers_url">/member/get-watchers?email=%1$s</string>
-    <string name="post_watch_access_url">/member/watch-access</string>
+    <string name="get_start_watch_url">/member/start-watch?requester=%1$s&amp;target=%2$s</string>
+    <string name="get_stop_watch_url">/member/stop-watch?requester=%1$s&amp;target=%2$s</string>
+    <string name="get_watchers_url">/member/get-watchers?requester=%1$s</string>
+    <string name="post_watch_access_url">/member/watch-access?requester=%1$s</string>
+    <string name="pin_verify_url">/member/add?requester=%1$s</string>
+    <string name="get_watches_url">/member/get-watches?requester=%1$s</string>
+    <string name="update_signature_url">/member/update-signature</string>
 
 
 </resources>

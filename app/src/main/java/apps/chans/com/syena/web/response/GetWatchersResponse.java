@@ -1,5 +1,7 @@
 package apps.chans.com.syena.web.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,14 +35,20 @@ public class GetWatchersResponse implements Serializable {
         watchers.add(new Entry(email, name, enabled));
     }
 
-    public class Entry implements Serializable {
+    public static class Entry implements Serializable {
         /**
          *
          */
         private static final long serialVersionUID = -8090556785484270675L;
+        @JsonProperty
         String email;
+        @JsonProperty
         String name;
+        @JsonProperty
         boolean enabled;
+
+        public Entry() {
+        }
 
         Entry(String email, String name, boolean enabled) {
             this.email = email;

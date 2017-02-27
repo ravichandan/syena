@@ -2,23 +2,8 @@ package apps.chans.com.syena.web.request;
 
 public class TagByCodeRequest {
 
-	private String requester;
+	// private String requester;
 	private String tagCode;
-
-	/**
-	 * @return the REQUESTER
-	 */
-	public String getRequester() {
-		return requester;
-	}
-
-	/**
-	 * @param REQUESTER
-	 *            the REQUESTER to set
-	 */
-	public void setRequester(String requester) {
-		this.requester = requester;
-	}
 
 	/**
 	 * @return the tagCode
