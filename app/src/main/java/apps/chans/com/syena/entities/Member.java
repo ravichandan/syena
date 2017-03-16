@@ -16,6 +16,7 @@ public class Member {
     private double latitude;
     private double longitude;
     private double altitude;
+    private float degree;
     private Map<Member, Watch> watchMap;
 
     public Member(String email) {
@@ -75,6 +76,14 @@ public class Member {
 
     public void setAltitude(double altitude) {
         this.altitude = altitude;
+    }
+
+    public float getDegree() {
+        return degree;
+    }
+
+    public void setDegree(float degree) {
+        this.degree = degree;
     }
 
     @Override

@@ -27,6 +27,7 @@
             ></android.support.v7.widget.Toolbar>
 
         <ImageView
+            android:id="@+id/tagMemberIV"
             android:layout_width="60sp"
             android:layout_height="60sp"
             android:adjustViewBounds="true"
@@ -44,7 +45,7 @@
             android:footerDividersEnabled="true"
             android:headerDividersEnabled="true"
             android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft"
-            android:layout_below="@+id/mainToolbar"
+            android:layout_above="@+id/tagMemberIV"
             android:layout_alignParentStart="true" />
     </RelativeLayout>
 

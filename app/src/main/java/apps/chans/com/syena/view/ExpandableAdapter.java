@@ -46,7 +46,7 @@ import static apps.chans.com.syena.datasource.DataSource.requestTimeOut;
 
 public class ExpandableAdapter extends BaseExpandableListAdapter {
 
-    private Context context;
+    private MainActivity context;
     private int groupRes;
     private int childRes;
     //private ExpandableListView expandableListView;
@@ -54,7 +54,7 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
     private RequestQueue queue;
     private String LOG_TAG = ExpandableAdapter.class.getSimpleName();
 
-    public ExpandableAdapter(Context context, ExpandableListView expandableListView, int groupRes, int childRes) {
+    public ExpandableAdapter(MainActivity context, ExpandableListView expandableListView, int groupRes, int childRes) {
         this.context = context;
         //this.expandableListView = expandableListView;
         this.groupRes = groupRes;
@@ -126,7 +126,7 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     ViewHolder vh = (ViewHolder) buttonView.getTag();
                     MainActivity.dataSource.getWatchList().get(vh.groupPosition).setActive(isChecked);
-                    MainActivity.dataSource.sort();
+                    //MainActivity.dataSource.sort();
                     TextView smallStatusText = vh.statusText;
                     final Watch watch1 = MainActivity.dataSource.getWatchList().get(vh.groupPosition);
                     if (isChecked) {
@@ -156,8 +156,8 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
                                 if (response.statusCode >= 200 && response.statusCode < 300) {
                                     Log.d(LOG_TAG, "Starting async task for watch : source: " + watch1.getSource().getEmail() + ", target: " + watch1.getTarget().getEmail());
                                     String url = context.getString(R.string.server_url) + context.getString(R.string.get_location_request_url, watch1.getSource().getEmail(), watch1.getTarget().getEmail());
-                                    LocationFetchRestTask rt = new LocationFetchRestTask(adapter, queue, watch1, url);
-                                    rt.execute();
+                                   // LocationFetchRestTask rt = new LocationFetchRestTask(adapter, queue, watch1, url);
+                                   // rt.execute();
                                     return Response.success(null, HttpHeaderParser.parseCacheHeaders(response));
 
                                 } else {
@@ -294,7 +294,6 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
         System.out.println("isChildSelectable ,groupPosition :" + groupPosition + ", childPosition" + childPosition);
-
         return true;
     }
 
@@ -336,8 +335,8 @@ public class ExpandableAdapter extends BaseExpandableListAdapter {
                             watch.getTarget().getLatitude(),
                             watch.getTarget().getLongitude(),
                             watch.getTarget().getAltitude()));
-
         }
+        context.setPointer(watch.getTarget());
     }
 
     public void updateWatchErrorStatus(Watch watch) {

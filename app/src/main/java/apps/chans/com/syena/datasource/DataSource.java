@@ -8,6 +8,7 @@ import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,14 +47,14 @@ import apps.chans.com.syena.web.response.GetWatchesResponse;
 public class DataSource {
     public static DataSource instance;
     public static List<Member> memberList = new ArrayList<Member>();
-    public static double latitude = 0.0;
-    public static double longitude = 0.0;
+    //public static double latitude = 0.0;
+    //public static double longitude = 0.0;
     public static double altitude = 0.0;
     public static int requestTimeOut = 600000;
-    private static String LOG_TAG = DataSource.class.getSimpleName();
     public Member currentMember;
     public Member selectedMember;
     public List<Watch> watchList = new ArrayList<Watch>();
+    private String LOG_TAG = getClass().getSimpleName();
     private MainActivity mainActivity;
     private String email;
     private String installationId;
@@ -66,7 +67,10 @@ public class DataSource {
         File emailFile = new File(directory, "Email-Id");
         File installationIdFile = new File(directory, "Installation-Id");
         String email = null;
+        Log.d(LOG_TAG, "Email file path " + emailFile.getAbsolutePath());
+
         if (emailFile.exists()) {
+            Log.d(LOG_TAG, "Email file exists ");
             try {
                 BufferedReader br = new BufferedReader(new FileReader(emailFile));
                 email = br.readLine();
@@ -76,7 +80,7 @@ public class DataSource {
                     this.email = email;
                 br.close();
             } catch (IOException e) {
-                Log.d("GetWatchesResponse", "Error occurred while getting 'Email-Id' from file, app may not function properly. " + getStackTrace(e));
+                Log.e("GetWatchesResponse", "Error occurred while getting 'Email-Id' from file, app may not function properly. ", e);
             }
         }
         if (installationIdFile.exists()) {
@@ -98,6 +102,11 @@ public class DataSource {
 
     public void sort() {
         Collections.sort(watchList);
+        for (Watch w : watchList) {
+            w.removeViewHolder();
+            //if (w.getViewHolder() != null && w.getViewHolder().startSwitch != null)
+            //w.getViewHolder().startSwitch.setChecked(w.isActive());
+        }
     }
 
     public List<Watch> getWatchList(boolean reloadFromServer) {
@@ -138,25 +147,35 @@ public class DataSource {
                             Log.d("GetWatchesResponse", "Empty response received from server");
                             return;
                         }
-                        getWatchList().clear();
-                        Member source = new Member(email);
+                        if (currentMember == null) currentMember = new Member(email);
+
+                        List<Watch> wl = new ArrayList<>();
                         for (GetWatchesResponse.Entry entry : getWatchesResponse.getWatchMembers()) {
                             Log.d(LOG_TAG, "Entry: " + entry.getEmail());
                             Member target = new Member(entry.getEmail(), entry.getName());
-                            Watch watch = new Watch(source, target);
-                            getWatchList().add(watch);
+                            Watch watch = new Watch(currentMember, target);
+                            if (currentMember.getWatchMap().get(target) != null) {
+                                watch.setViewHolder(currentMember.getWatchMap().get(target).getViewHolder());
+                            }
+                            currentMember.getWatchMap().put(target, watch);
+                            wl.add(watch);
                         }
-                        mainActivity.stopSwipeRefresh();
-                        mainActivity.notifyWatchesDataSet();
-
+                        getWatchList().clear();
+                        getWatchList().addAll(wl);
+                        try {
+                            mainActivity.stopSwipeRefresh();
+                            mainActivity.notifyWatchesDataSet();
+                            mainActivity.stopSwipeRefresh();
+                        } finally {
+                            mainActivity.stopSwipeRefresh();
+                        }
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        Log.d("EmailVerifyResponse-Err", "Error occured ", error);
                         mainActivity.stopSwipeRefresh();
-                        error.printStackTrace();
-                        Log.d("EmailVerifyResponse-Err", "Error occured " + error.getLocalizedMessage());
 
                     }
                 }) {
@@ -230,13 +249,13 @@ public class DataSource {
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
-                            Log.d("LocationUpdate", "Response from server is successful");
+                            Log.d(LOG_TAG,"LocationUpdate: Response from server is successful");
                         }
                     },
                     new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            Log.d("LocationUpdate", "Response from server is failed");
+                            Log.e(LOG_TAG,"LocationUpdate: "+ "Response from server is failed",error);
                             if (error != null && error.networkResponse != null)
                                 Log.d("ResponseStatus:", "LocationUpdate Response status code : " + error.networkResponse.statusCode);
                         }
@@ -247,6 +266,16 @@ public class DataSource {
                     Map<String, String> headers = new HashMap<>();
                     headers.put(mainActivity.getString(R.string.hp_Installation_Id), getInstallationId());
                     return headers;
+                }
+                @Override
+                protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
+                    if (response.statusCode >= 200 && response.statusCode < 300) {
+                        Log.d(LOG_TAG, "Status code is success");
+                        return Response.success(null, HttpHeaderParser.parseCacheHeaders(response));
+                    } else {
+                        Log.d(LOG_TAG, "Status code is not success. Returning error response "+response.statusCode);
+                        return Response.error(new VolleyError(response));
+                    }
                 }
             };
             jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(

@@ -2,15 +2,17 @@ package apps.chans.com.syena;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -21,10 +23,13 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
+import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
@@ -40,6 +45,13 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
@@ -61,39 +73,70 @@ import java.util.Map;
 import apps.chans.com.syena.datasource.DataSource;
 import apps.chans.com.syena.entities.Member;
 import apps.chans.com.syena.entities.Watch;
-import apps.chans.com.syena.view.ExpandableAdapter;
+import apps.chans.com.syena.view.WatchExpandableAdapter;
 import apps.chans.com.syena.web.request.PinValidationRequest;
 import apps.chans.com.syena.web.response.EmailVerifyResponse;
 import apps.chans.com.syena.web.response.PinValidationResponse;
 
-import static apps.chans.com.syena.datasource.DataSource.latitude;
-import static apps.chans.com.syena.datasource.DataSource.longitude;
 import static apps.chans.com.syena.datasource.DataSource.requestTimeOut;
 
+//import static apps.chans.com.syena.datasource.DataSource.latitude;
+//import static apps.chans.com.syena.datasource.DataSource.longitude;
 
-public class MainActivity extends AppCompatActivity {
+
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
     public static DataSource dataSource;
     public static RequestQueue queue;
+    private static boolean loggedInAlready;
+    LocationRequest mLocationRequest;
+    GoogleApiClient mGoogleApiClient;
+    Location mCurrentLocation;
+    String mLastUpdateTime;
+    MyLocationHandler locationHandler;
     private int TAG_MEMBER_RESULT = 1;
-    private ExpandableAdapter adapter;
+    private float[] mGravity = new float[3];
+    private float[] mGeomagnetic = new float[3];
+    private WatchExpandableAdapter adapter;
     private ExpandableListView expandableListView;
     private SwipeRefreshLayout activity_main;
     private String LOG_TAG = MainActivity.class.getSimpleName();
-    private boolean loggedInAlready;
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private Sensor magnetometer;
+
+    protected void createLocationRequest() {
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(1000 * 10);
+        mLocationRequest.setFastestInterval(1000 * 5);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setSmallestDisplacement(1);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(LOG_TAG, "In onCreate, savedInstanceState: " + savedInstanceState);
         super.onCreate(savedInstanceState);
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+       /* boolean accel = sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        boolean magnet = sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+        boolean gyro = sensorManager.registerListener(
+                this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
+                SensorManager.SENSOR_DELAY_NORMAL);
+        Log.d(LOG_TAG, "1111results of listener registers: " + accel + magnet + gyro);*/
 
         queue = Volley.newRequestQueue(this);
+        queue.start();
+
         Log.d(LOG_TAG, "Starting MainActivity, dataSource: " + dataSource);
 
         if (this.dataSource == null) {
             dataSource = new DataSource(this);
             loggedInAlready = false;
         }
-        Log.d(LOG_TAG, "Starting MainActivity, loggedInAlready: " + loggedInAlready);
+        Log.d(LOG_TAG, "Starting MainActivity, loggedInAlready: " + loggedInAlready + ", dataSource -> email: " + dataSource.getEmail());
         if (loggedInAlready) {
             welcome();
         } else {
@@ -121,33 +164,80 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(LOG_TAG, "onStart is called");
+        if (mGoogleApiClient != null) {
+            Log.d(LOG_TAG, "Trying to connect mGoogleApiClient");
+            mGoogleApiClient.connect();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        //for system oriented sensor listeners
+        boolean accel = sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        boolean magnet = sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+        //boolean gyro = sensorManager.registerListener(this,sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),SensorManager.SENSOR_DELAY_NORMAL);
+        //Log.d(LOG_TAG, "results of listener registers: " + accel + magnet);
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected() && locationHandler != null) {
+            locationHandler.startLocationUpdates();
+            Log.d(LOG_TAG, "Location update resumed .....................");
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // to stop the listener and save battery
+        sensorManager.unregisterListener(this);
+        if (locationHandler != null) locationHandler.stopLocationUpdates();
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(LOG_TAG, "onStop is called");
+        if (mGoogleApiClient != null) {
+            Log.d(LOG_TAG, "Trying to disconnect mGoogleApiClient");
+            mGoogleApiClient.disconnect();
+        }
+        queue.stop();
+
+    }
+
     private void autoLogin(String email) {
         final ObjectMapper mapper = new ObjectMapper();
-        Log.d("MainActivity", "In autoLogin :   " + email);
+        Log.d(LOG_TAG, "In autoLogin :   " + email);
         String url = getString(R.string.server_url) + getString(R.string.get_or_create_url, email);
         StringRequest jsonObjectRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                Log.d("EmailVerifyResponse", response);
+                Log.d(LOG_TAG, response);
                 EmailVerifyResponse verifyResponse = null;
                 try {
                     verifyResponse = mapper.readValue(response.toString(), EmailVerifyResponse.class);
                 } catch (IOException e) {
-                    Log.d("EmailVerifyResponse", getStackTrace(e));
+                    Log.d(LOG_TAG, getStackTrace(e));
                     dataSource.eraseEmailData();
                     //recreate();
                     return;
                 }
                 if (null == verifyResponse) {
-                    Log.d("EmailVerifyResponse", "Empty response received from server");
+                    Log.d(LOG_TAG, "Empty response received from server");
                     return;
                 }
                 try {
-                    Log.d("EmailVerifyResponse", "Response status : " + verifyResponse.getStatus());
+                    Log.d(LOG_TAG, "Response status : " + verifyResponse.getStatus());
 
                     switch (verifyResponse.getStatus()) {
                         case EmailVerifyResponse.NEW_ENTRY:
                         case EmailVerifyResponse.NEW_DEVICE:
+                            dataSource.currentMember = new Member(verifyResponse.getEmail());
                             File directory = getFilesDir();
                             File installationIdFile = new File(directory, "Installation-Id");
                             try {
@@ -158,12 +248,13 @@ public class MainActivity extends AppCompatActivity {
                                 fos.close();
                                 BufferedReader br = new BufferedReader(new FileReader(installationIdFile));
                                 dataSource.setInstallationId(br.readLine());
-                                Log.d("INSTALLATION-ID", dataSource.getInstallationId());
+                                Log.d(LOG_TAG, "INSTALLATION-ID" + dataSource.getInstallationId());
                                 br.close();
                             } catch (IOException e) {
-                                Log.d("EmailVerifyResponse", "Error occurred while getting 'Installation-Id' from file, app may not function properly. " + getStackTrace(e));
+                                Log.d(LOG_TAG, "Error occurred while getting 'Installation-Id' from file, app may not function properly. " + getStackTrace(e));
                             }
                             showPinPopup(R.layout.pin_generate_popup, verifyResponse.getEmail());
+
                             break;
                         case EmailVerifyResponse.SUCCESS:
                             welcome();
@@ -188,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 error.printStackTrace();
-                Log.d("EmailVerifyResponse-Err", "Error occured ", error);
+                Log.d(LOG_TAG, "EmailVerifyResponse-Err, Error occured ", error);
                 dataSource.eraseEmailData();
                 //recreate();
                 return;
@@ -228,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
                 pinSubmitButton.setEnabled(false);
                 EditText emailText = (EditText) view.findViewById(R.id.emailText);
                 if (emailText == null || emailText.getText() == null || StringUtils.isBlank(emailText.getText().toString())) {
-                    Log.d("PinValidationResponse", "Pin should not be empty");
+                    Log.d(LOG_TAG, "Pin should not be empty");
                     TextView emailResonseLabelTextView = (TextView) loginView.findViewById(R.id.emailResponseLabel);
                     emailResonseLabelTextView.setText("Email should not be empty");
                     pinSubmitButton.setText(getString(R.string.enter_text));
@@ -239,17 +330,17 @@ public class MainActivity extends AppCompatActivity {
                 //TODO validate email
                 final ObjectMapper mapper = new ObjectMapper();
                 String url = getString(R.string.server_url) + getString(R.string.get_or_create_url, emailText.getText().toString());
-                Log.d("URL : ", url);
+                Log.d(LOG_TAG, "URL : " + url);
                 StringRequest jsonObjectRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.d("EmailVerifyResponse", response);
+                        Log.d(LOG_TAG, "EmailVerifyResponse: " + response);
                         EmailVerifyResponse verifyResponse = null;
                         TextView emailResponseLabelTextView = (TextView) loginView.findViewById(R.id.emailResponseLabel);
                         try {
                             verifyResponse = mapper.readValue(response.toString(), EmailVerifyResponse.class);
                         } catch (IOException e) {
-                            Log.d("EmailVerifyResponse", getStackTrace(e));
+                            Log.d(LOG_TAG, "Error occured in EmailVerifyResponse: ", e);
                             pinSubmitButton.setText(getString(R.string.enter_text));
                             emailResponseLabelTextView.setText(e.getMessage() + " " + e.getLocalizedMessage());
                             return;
@@ -261,7 +352,7 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         try {
-                            Log.d("EmailVerifyResponse", "Response status : " + verifyResponse.getStatus());
+                            Log.d(LOG_TAG, "EmailVerifyResponse-> Response status : " + verifyResponse.getStatus());
 
                             switch (verifyResponse.getStatus()) {
                                 case EmailVerifyResponse.NEW_ENTRY:
@@ -278,10 +369,10 @@ public class MainActivity extends AppCompatActivity {
                                         fos.close();
                                         BufferedReader br = new BufferedReader(new FileReader(installationIdFile));
                                         dataSource.setInstallationId(br.readLine());
-                                        Log.d("INSTALLATION-ID", dataSource.getInstallationId());
+                                        Log.d(LOG_TAG, "INSTALLATION-ID" + dataSource.getInstallationId());
                                         br.close();
                                     } catch (IOException e) {
-                                        Log.d("EmailVerifyResponse", "Error occurred while getting 'Installation-Id' from file, app may not function properly. " + getStackTrace(e));
+                                        Log.d(LOG_TAG, "EmailVerifyResponse, Error occurred while getting 'Installation-Id' from file, app may not function properly. ", (e));
                                     }
                                     showPinPopup(R.layout.pin_generate_popup, verifyResponse.getEmail());
                                     break;
@@ -314,12 +405,12 @@ public class MainActivity extends AppCompatActivity {
                                     pinSubmitButton.setEnabled(true);
                                     break;
                                 default:
-                                    Log.d("EmailVerifyResponse", "Default case, status : " + verifyResponse.getStatus());
+                                    Log.d(LOG_TAG, "EmailVerifyResponse, Default case, status : " + verifyResponse.getStatus());
                                     popupWindow.dismiss();
                                     break;
                             }
                         } catch (Exception e) {
-                            Log.d("EmailVerifyResponse", getStackTrace(e));
+                            Log.e(LOG_TAG, "Error occured in EmailVerifyResponse-> ", (e));
                             emailResponseLabelTextView.setText("System error occurred. Please try again");
                             pinSubmitButton.setText(getString(R.string.enter_text));
                             pinSubmitButton.setEnabled(true);
@@ -329,7 +420,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         error.printStackTrace();
-                        Log.d("EmailVerifyResponse-Err", "Error occured ", error);
+                        Log.e(LOG_TAG, "EmailVerifyResponse-Err, Error occurred ", error);
                         TextView emailResponseLabelTextView = (TextView) loginView.findViewById(R.id.emailResponseLabel);
                         emailResponseLabelTextView.setText("System error occurred. Please try again");
                         pinSubmitButton.setText(getString(R.string.enter_text));
@@ -353,17 +444,21 @@ public class MainActivity extends AppCompatActivity {
         try {
             File directory = getFilesDir();
             File emailFile = new File(directory, "Email-Id");
+            Log.d(LOG_TAG, "Creating new emailFile: " + emailFile.getAbsolutePath());
             emailFile.createNewFile();
+            Log.d(LOG_TAG, "Created new emailFile: " + emailFile.exists());
             bw = new BufferedWriter(new FileWriter(emailFile));
             bw.write(email);
+            bw.flush();
+            bw.close();
             br = new BufferedReader(new FileReader(emailFile));
-
-            Log.d("Email-ID", "Email read from file" + br.readLine());
+            Log.d(LOG_TAG, "Email read from file" + br.readLine());
+            br.close();
             if (!StringUtils.isBlank(email))
                 dataSource.setEmail(email);
 
         } catch (IOException e) {
-            Log.d("GetWatchesResponse", "Error occurred while getting 'Email-Id' from file, app may not function properly. " + getStackTrace(e));
+            Log.e(LOG_TAG, "Error occurred while getting 'Email-Id' from file, app may not function properly. " + getStackTrace(e));
         } finally {
             try {
                 br.close();
@@ -389,7 +484,7 @@ public class MainActivity extends AppCompatActivity {
                 View view = (View) v.getTag();
                 EditText pinText = (EditText) view.findViewById(R.id.pinText);
                 if (pinText == null || pinText.getText() == null || StringUtils.isBlank(pinText.getText().toString())) {
-                    Log.d("PinValidationResponse", "Pin should not be empty");
+                    Log.d(LOG_TAG, "Pin should not be empty");
                     TextView pinResponseLabelTextView = (TextView) loginView.findViewById(R.id.pin_server_response_label);
                     pinResponseLabelTextView.setText("Pin should not be empty");
                     pinSubmitButton.setText(getString(R.string.enter_text));
@@ -407,7 +502,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     jsonReq = new JSONObject(mapper.writeValueAsString(request));
                 } catch (IOException | JSONException e) {
-                    Log.d("PinValidationResponse", getStackTrace(e));
+                    Log.e(LOG_TAG, getStackTrace(e));
                     pinResponseLabelTextView.setText("System error occured in app.");
                     pinSubmitButton.setText(getString(R.string.enter_text));
                     pinSubmitButton.setEnabled(true);
@@ -422,12 +517,12 @@ public class MainActivity extends AppCompatActivity {
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
-                                Log.d("PinValidationResponse", response.toString());
-                                PinValidationResponse verifyResponse = null;
+                                Log.d(LOG_TAG, "PinValidationResponse: " + response.toString());
+                                PinValidationResponse verifyResponse;
                                 try {
                                     verifyResponse = mapper.readValue(response.toString(), PinValidationResponse.class);
                                 } catch (IOException e) {
-                                    Log.d("PinValidationResponse", getStackTrace(e));
+                                    Log.e(LOG_TAG, "PinValidationResponse", e);
                                     pinResponseLabelTextView.setText("Received response can't be parsed.");
                                     pinSubmitButton.setText(getString(R.string.enter_text));
                                     pinSubmitButton.setEnabled(true);
@@ -453,10 +548,10 @@ public class MainActivity extends AppCompatActivity {
                                             fos.flush();
                                             fos.close();
                                             BufferedReader br = new BufferedReader(new FileReader(emailIdFile));
-                                            Log.d("Email-ID", br.readLine());
+                                            Log.d(LOG_TAG, br.readLine());
                                             br.close();
                                         } catch (IOException e) {
-                                            Log.d("Error", "Error occurred while getting 'Installation-Id' from file, app may not function properly. " + getStackTrace(e));
+                                            Log.e(LOG_TAG, "Error occurred while getting 'Installation-Id' from file, app may not function properly. " + getStackTrace(e));
                                         }
                                         welcome();
                                         break;
@@ -492,7 +587,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onErrorResponse(VolleyError error) {
                                 error.printStackTrace();
-                                Log.d("PinValidationResponse", "Error occured " + getStackTrace(error));
+                                Log.e(LOG_TAG, "Error occured " + getStackTrace(error));
                                 pinSubmitButton.setText(getString(R.string.enter_text));
                                 pinResponseLabelTextView.setText("System error occurred. Please try again");
                                 pinSubmitButton.setText(getString(R.string.enter_text));
@@ -541,7 +636,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void welcome() {
-        Log.d("MainActivity", "In Welcome");
+        Log.d(LOG_TAG, "In Welcome");
 
         loggedInAlready = true;
         if (dataSource.currentMember == null)
@@ -571,18 +666,37 @@ public class MainActivity extends AppCompatActivity {
         });
         expandableListView = (ExpandableListView) this.findViewById(R.id.expandableListView);
 
-        adapter = new ExpandableAdapter(this, expandableListView, R.layout.watch_group_view, R.layout.watch_list_view);
+        adapter = new WatchExpandableAdapter(this, R.layout.watch_group_view, R.layout.watch_list_view);
 
         expandableListView.setAdapter(adapter);
         for (int i = 0; i < adapter.getGroupCount(); i++) {
             expandableListView.collapseGroup(i);
         }
-        Log.d("DEBUG", "Registering location listener");
-        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Log.d(LOG_TAG, "Registering location listener");
+        createLocationRequest();
+        locationHandler = new MyLocationHandler();
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(locationHandler)
+                .addOnConnectionFailedListener(locationHandler)
+                .build();
+        if (mGoogleApiClient != null) {
+            Log.d(LOG_TAG, "Trying to connect mGoogleApiClient");
+            mGoogleApiClient.connect();
+        }
+        ImageView tagMemberIV= (ImageView) findViewById(R.id.tagMemberIV);
+        tagMemberIV.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tagMember(v);
+            }
+        });
+        /*LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Criteria criteria = new Criteria();
-        String provider = lm.getBestProvider(criteria, false);
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        String provider = lm.getBestProvider(criteria, true);
         Log.d(LOG_TAG, "Selected provider : " + provider);
-        LocationListener ll = new MyLocationListener();
+        LocationListener locationHandler = new MyLocationHandler();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -591,20 +705,37 @@ public class MainActivity extends AppCompatActivity {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            Log.d("MainActivity", "Permissions are not available");
+            Log.d(LOG_TAG, "Permissions are not available");
             return;
         } else {
-            Log.d("MainActivity", "Permissions are  available");
+            Log.d(LOG_TAG, "Permissions are  available");
         }
         if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER))
-            Log.d("DEBUG", "GPS is enabled in this servicee");
+            Log.d(LOG_TAG, "GPS is enabled in this servicee");
         if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
-            Log.d("DEBUG", "NETWORK_PROVIDER is enabled in this servicee");
-        Log.d("DEBUG", "Last known location " + lm.getLastKnownLocation(LocationManager.GPS_PROVIDER));
-        Log.d("DEBUG", "Last known location network provider " + lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
+            Log.d(LOG_TAG, "NETWORK_PROVIDER is enabled in this servicee");
+        if (!lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) && !lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+            return;
+        }
+        Location lastGpsLocation = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        Location lastNtwLocation = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        Log.d(LOG_TAG, "Last known location " + lastGpsLocation);
+        Log.d(LOG_TAG, "Last known location network provider " + lastNtwLocation);
+        if (lastGpsLocation != null || lastNtwLocation != null) {
+            if (lastNtwLocation != null && lastGpsLocation != null) {
+                if (lastNtwLocation.getTime() > lastGpsLocation.getTime())
+                    locationHandler.onLocationChanged(lastNtwLocation);
+                else
+                    locationHandler.onLocationChanged(lastGpsLocation);
+            }
+            if (lastNtwLocation != null) locationHandler.onLocationChanged(lastNtwLocation);
+            else locationHandler.onLocationChanged(lastGpsLocation);
+        }
 
 
-        lm.requestLocationUpdates(provider, 400, 0.01f, ll);
+        lm.requestLocationUpdates(provider, 400, 1f, locationHandler);*/
 //        expandableListView.setChoiceMode(ExpandableListView.CHOICE_MODE_MULTIPLE);
         dataSource.getWatchList(true);
 
@@ -636,7 +767,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void tagMember(View view) {
-
+        Log.d(LOG_TAG, "In tagMember");
         Intent intent = new Intent(this, TagMemberActivity.class);
         startActivityForResult(intent, TAG_MEMBER_RESULT);
     }
@@ -723,26 +854,130 @@ public class MainActivity extends AppCompatActivity {
 
     public void notifyWatchesDataSet() {
         Log.d(LOG_TAG, "Notifying dataset for watches");
-
-        adapter.notifyDataSetChanged();
+        if (adapter != null)
+            adapter.notifyDataSetChanged();
     }
 
     public void stopSwipeRefresh() {
         Log.d(LOG_TAG, "Stopping refreshing of swipeview");
-        activity_main.setRefreshing(false);
+        if (activity_main != null) {
+            activity_main.setRefreshing(false);
+            Log.d(LOG_TAG, "Stopped refreshing of swipeview, and swipeview status is " + activity_main.isRefreshing());
+        }
+
     }
 
-    private class MyLocationListener implements LocationListener {
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        float degree = 0;
+        float data[] = null;
+        // float[] mGData = new float[3];
+        //float[] mMData = new float[3];
 
-        public MyLocationListener() {
-            Log.d("DEBUG", "In location listener");
+        boolean ready = false;
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            data = mGravity;
+
+        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+            data = mGeomagnetic;
+        } else return;
+
+        for (int i = 0; i < 3; i++)
+            data[i] = event.values[i];
+
+        if (mGravity != null && mGeomagnetic != null) {
+            float R[] = new float[16];
+            float I[] = new float[16];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            //Log.d(LOG_TAG, "rotation matrix result=" + success);
+            if (success) {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+                // Log.d(LOG_TAG, "orientation vals: " + orientation[0] + " " + orientation[1] + " " + orientation[2]);
+                degree = orientation[0]; // orientation contains: azimut, pitch and roll
+            }
+        }
+        //Log.d(LOG_TAG, "Azimuth: " + degree);
+        // = Math.round(event.values[0]);
+        //Log.d(LOG_TAG, "In onSensorChanged, degree: " + degree);
+        if (dataSource.currentMember != null) {
+            dataSource.currentMember.setDegree(degree);
+            for (Member member : dataSource.currentMember.getWatchMap().keySet())
+                setPointer(member);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        //not in scope for now
+    }
+
+    public void setPointer(Member target) {
+        if (!dataSource.currentMember.getWatchMap().get(target).isActive())
+            return;
+        double lat2 = dataSource.currentMember.getLatitude();
+        double lat1 = target.getLatitude();
+        double lon2 = dataSource.currentMember.getLongitude();
+        double lon1 = target.getLongitude();
+        //Log.d(LOG_TAG, "In setPointer" + target.getEmail() + " " + lat1 + " " + lon1 + " " + lat2 + " " + lon2);
+        double dLat = Math.toRadians(lat1 - lat2);
+        double dLon = Math.toRadians(lon1 - lon2);
+
+        //lat1 = Math.toRadians(lat1);
+        //lat2 = Math.toRadians(lat2);
+
+        //double y = Math.sin(dLon) * Math.cos(lat2);
+        //double x = Math.cos(lat1) * Math.sin(lat2) -
+        //        Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        double brng = Math.toDegrees(Math.atan2(dLon, dLat));
+        //Log.d(LOG_TAG,"Brng "+brng);
+        //Log.d("SetPointer", "Curr: "+dataSource.currentMember.getEmail()+" target : "+target.getEmail()+" Brng " + brng + " dLon " + dLon + " dLat " + dLat + " lat1 " + lat1 + " lat2 " + lat2 + " lon1 " + lon1 + " lon2 " + lon2);
+        // fix negative degrees
+        if (brng < 0) {
+            //    brng = 360 + brng;
+        }
+
+        float degree = (float) brng - (dataSource.currentMember.getDegree() * (float) (180.0f / Math.PI));//-(float) brng ;
+        //Log.d(LOG_TAG,"degree "+degree);
+
+        if (degree < 0) degree = degree + 360;
+
+        // create a rotation animation (reverse turn degree degrees)
+        RotateAnimation ra = new RotateAnimation(
+                dataSource.currentMember.getDegree(),
+                degree,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF,
+                0.5f);
+
+        // how long the animation will take place
+        ra.setDuration(0);
+
+        // set the animation after the end of the reservation status
+        ra.setFillAfter(true);
+
+        // Start the animation
+        if (dataSource.currentMember.getWatchMap().get(target) != null
+                && dataSource.currentMember.getWatchMap().get(target).getViewHolder() != null
+                && dataSource.currentMember.getWatchMap().get(target).getViewHolder().compassPointer != null) {
+            //dataSource.currentMember.getWatchMap().get(target).getViewHolder().compassPointer.startAnimation(ra);
+            //Log.d(LOG_TAG, target.getEmail() + " Rotating image by degree: " + degree);
+            dataSource.currentMember.getWatchMap().get(target).getViewHolder().compassPointer.setRotation(degree);
+        }
+        //dataSource.currentMember.setDegree(-degree);
+    }
+
+    private class MyLocationHandler implements LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+        public MyLocationHandler() {
+            Log.d(LOG_TAG, "In location listener");
         }
 
         @Override
         public void onLocationChanged(Location location) {
             Log.d(LOG_TAG, "onLocationChanged : " + location.getLatitude() + ", " + location.getLongitude() + ", " + location.getAltitude());
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
+            dataSource.currentMember.setLatitude(location.getLatitude());
+            dataSource.currentMember.setLongitude(location.getLongitude());
 
             // Intent email = new Intent(Intent.ACTION_SEND);
             // email.putExtra(Intent.EXTRA_EMAIL, new String[]{"chandan.ravi1987@gmail.com"});
@@ -754,22 +989,60 @@ public class MainActivity extends AppCompatActivity {
 
             // startActivity(Intent.createChooser(email, "Choose an Email client :"));
 
-            dataSource.updateLocation(latitude, longitude, location.getAltitude());
+            dataSource.updateLocation(dataSource.currentMember.getLatitude(), dataSource.currentMember.getLongitude(), location.getAltitude());
+        }
+
+
+        @Override
+        public void onConnected(@Nullable Bundle bundle) {
+            Log.d(LOG_TAG, "In onConnected of MyLocationHandler");
+            startLocationUpdates();
+        }
+
+        public void startLocationUpdates() {
+            Log.d(LOG_TAG, "In startLocationUpdates, checking for permissions");
+
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                Log.d(LOG_TAG, "In startLocationUpdates, Permissions are not available");
+
+                return;
+            }
+            Log.d(LOG_TAG, "In startLocationUpdates, permissions are available.");
+
+            if (mGoogleApiClient != null && mLocationRequest != null) {
+                Log.d(LOG_TAG, "In startLocationUpdates, Requesting location updates");
+
+                PendingResult<Status> pendingResult =
+                        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+            }
         }
 
         @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            System.out.println("onStatusChanged");
+        public void onConnectionSuspended(int i) {
+            Log.d(LOG_TAG, "In onConnectionSuspended of MyLocationHandler");
+
         }
 
         @Override
-        public void onProviderEnabled(String provider) {
-            System.out.println("onProviderEnabled");
+        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+            Log.d(LOG_TAG, "In onConnectionFailed of MyLocationHandler");
+
         }
 
-        @Override
-        public void onProviderDisabled(String provider) {
-            System.out.println("onProviderDisabled");
+        protected void stopLocationUpdates() {
+            LocationServices.FusedLocationApi.removeLocationUpdates(
+                    mGoogleApiClient, this);
+            Log.d(LOG_TAG, "Location update stopped .......................");
         }
     }
 }

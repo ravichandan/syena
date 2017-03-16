@@ -8,11 +8,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -24,7 +20,7 @@ import java.util.Map;
 
 import apps.chans.com.syena.datasource.DataSource;
 import apps.chans.com.syena.entities.Watch;
-import apps.chans.com.syena.view.ExpandableAdapter;
+import apps.chans.com.syena.view.WatchExpandableAdapter;
 import apps.chans.com.syena.web.response.LocationResponse;
 
 /**
@@ -34,12 +30,12 @@ import apps.chans.com.syena.web.response.LocationResponse;
 public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
     public static String LOG_TAG = LocationFetchRestTask.class.getSimpleName();
     private String url;
-    private ExpandableAdapter adapter;
+    private WatchExpandableAdapter adapter;
     private Watch watch;
     private RequestQueue queue;
     private int retries = 10, count = 0;
 
-    public LocationFetchRestTask(ExpandableAdapter adapter, RequestQueue queue, Watch watch, String url) {
+    public LocationFetchRestTask(WatchExpandableAdapter adapter, RequestQueue queue, Watch watch, String url) {
         this.adapter = adapter;
         this.queue = queue;
         this.watch = watch;
@@ -57,7 +53,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
      */
     public static double calculateDistance(double lat1, double lat2, double lon1,
                                            double lon2, double el1, double el2) {
-
+        Log.d(LOG_TAG, "Calculating distance : " + lat1 + " " + lon1 + " " + lat2 + " " + lon2 + " " + el1 + " " + el2);
         final int radius = 6371; // Radius of the earth
 
         Double latDistance = Math.toRadians(lat2 - lat1);
@@ -68,12 +64,12 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
         Double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double distance = radius * c * 1000; // convert to meters
 
-       /* double height = el1 - el2;
+        double height = el1 - el2;
 
         distance = Math.pow(distance, 2) + Math.pow(height, 2);
 
-        return Math.sqrt(distance);*/
-        return distance;
+        return Math.sqrt(distance);
+        //return distance;
     }
 
     public void incrementCount() {
@@ -82,26 +78,28 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
 
     @Override
     protected Void doInBackground(Object... params) {
+        Log.d(LOG_TAG,"In doInBackground");
         if (watch.getSource() == null || watch.getTarget() == null) return null;
-        Log.d(LOG_TAG, "Started background job for " + watch.getTarget().getEmail());
-        final String targetEmail = watch.getTarget().getEmail();
+        Log.d(LOG_TAG, "Started background job for " + watch);
+        //final String targetEmail = watch.getTarget().getEmail();
 
-    // loop every 'refreshInterval' seconds and get the location updates of target
+        // loop every 'refreshInterval' seconds and get the location updates of target
         while (watch.isActive() && count <= retries) {
-            Log.d(LOG_TAG, "Looping in seconds :  " + watch.getWatchConfiguration().getRefreshInterval() * 1000);
-
-            StringRequest stringRequest = new StringRequest(Request.Method.GET,url,
+            Log.d(LOG_TAG, "Looping in seconds :  " + watch.getWatchConfiguration().getRefreshInterval() * 1000 + ", watch: " + watch);
+            StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
-                            Log.d(LOG_TAG, url + " " + targetEmail + " Got response from server : " + response);
+                            Log.d(LOG_TAG, url + " " + watch + " Got response from server : " + response);
                             ObjectMapper mapper = new ObjectMapper();
                             try {
+
                                 LocationResponse locationResponse = mapper.readValue(response.toString(), LocationResponse.class);
                                 switch (locationResponse.getStatus()) {
                                     case LocationResponse.SUCCESS:
-                                        double distance = calculateDistance(DataSource.latitude, locationResponse.getLatitude(),
-                                                DataSource.longitude, locationResponse.getLongitude(), 0, 0);
+                                        double distance = calculateDistance(watch.getSource().getLatitude(), locationResponse.getLatitude(),
+                                                watch.getSource().getLongitude(), locationResponse.getLongitude(), 0, 0);
+                                        Log.d(LOG_TAG, watch.getTarget().getEmail() + " Rcvd dist: " + locationResponse.getDistanceApart() + ", calc dist: " + distance + " locationRes.getLat()" + locationResponse.getLatitude() + " locationRes.getLon()" + locationResponse.getLongitude());
                                         watch.getTarget().setLatitude(locationResponse.getLatitude());
                                         watch.getTarget().setLongitude(locationResponse.getLongitude());
                                         watch.getTarget().setAltitude(locationResponse.getAltitude());
@@ -127,15 +125,10 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
                 public void onErrorResponse(VolleyError error) {
                     Log.d(LOG_TAG, "Got error from server : " + error);
                     Log.d(LOG_TAG, "Got error from server, details: " + getStackTrace(error));
-
-
                     incrementCount();
-
                 }
-
             }
-
-            ){
+            ) {
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
                     Map<String, String> headers = new HashMap<>();
@@ -143,6 +136,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
                     return headers;
                 }
             };
+            //Log.d(LOG_TAG, "Adding to queue");
             queue.add(stringRequest);
             try {
                 Thread.sleep(watch.getWatchConfiguration().getRefreshInterval() * 1000);
@@ -152,6 +146,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
         }
         return null;
     }
+
     /**
      * Creates and returns a {@link java.lang.String} from t’s stacktrace
      *
@@ -174,6 +169,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
         }
         return trace;
     }
+
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
