@@ -74,13 +74,13 @@ public class DataSource {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(emailFile));
                 email = br.readLine();
-                Log.d("Email-ID", "Email read from file" + email);
+                Log.d(LOG_TAG, "Email read from file" + email);
                 if (StringUtils.isBlank(email)) this.email = null;
                 else
                     this.email = email;
                 br.close();
             } catch (IOException e) {
-                Log.e("GetWatchesResponse", "Error occurred while getting 'Email-Id' from file, app may not function properly. ", e);
+                Log.e(LOG_TAG, "GetWatchesResponse : Error occurred while getting 'Email-Id' from file, app may not function properly. ", e);
             }
         }
         if (installationIdFile.exists()) {
@@ -91,10 +91,10 @@ public class DataSource {
                 if (StringUtils.isBlank(id)) this.installationId = null;
                 else
                     this.installationId = id;
-                Log.d("DataSource", "INSTALLATION-ID" + id);
+                Log.d(LOG_TAG, "INSTALLATION-ID: " + id);
                 br.close();
             } catch (IOException e) {
-                Log.d("EmailVerifyResponse", "Error occurred while getting 'Installation-Id' from file, app may not function properly. " + getStackTrace(e));
+                Log.d(LOG_TAG, "EmailVerifyResponse : Error occurred while getting 'Installation-Id' from file, app may not function properly. " + getStackTrace(e));
             }
         }
         instance = this;
@@ -111,8 +111,8 @@ public class DataSource {
 
     public List<Watch> getWatchList(boolean reloadFromServer) {
         if (email == null) {
-            Log.d("Datasource", "Source Email is null.");
-            return null;
+            Log.d(LOG_TAG, "Source Email is null.");
+            //return null;
         }
         if (reloadFromServer) {
             refreshWatchList();
@@ -132,19 +132,19 @@ public class DataSource {
                     @Override
                     public void onResponse(String response) {
                         mainActivity.stopSwipeRefresh();
-                        Log.d("GetWatchesResponse", response);
+                        Log.d(LOG_TAG, "GetWatchesResponse: " + response);
                         GetWatchesResponse getWatchesResponse = null;
                         try {
                             getWatchesResponse = mapper.readValue(response.toString(), GetWatchesResponse.class);
                         } catch (IOException e) {
-                            Log.d("EmailVerifyResponse", getStackTrace(e));
+                            Log.d(LOG_TAG, "EmailVerifyResponse: ", e);
                             return;
                         }
                         if (null == getWatchesResponse
                                 || getWatchesResponse.getWatchMembers() == null
                                 || getWatchesResponse.getWatchMembers().size() <= 0) {
 
-                            Log.d("GetWatchesResponse", "Empty response received from server");
+                            Log.d(LOG_TAG, "GetWatchesResponse: Empty response received from server");
                             return;
                         }
                         if (currentMember == null) currentMember = new Member(email);
@@ -174,7 +174,7 @@ public class DataSource {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d("EmailVerifyResponse-Err", "Error occured ", error);
+                        Log.d(LOG_TAG, "EmailVerifyResponse-Err: Error occured ", error);
                         mainActivity.stopSwipeRefresh();
 
                     }
@@ -249,15 +249,15 @@ public class DataSource {
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
-                            Log.d(LOG_TAG,"LocationUpdate: Response from server is successful");
+                            Log.d(LOG_TAG, "LocationUpdate: Response from server is successful");
                         }
                     },
                     new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            Log.e(LOG_TAG,"LocationUpdate: "+ "Response from server is failed",error);
+                            Log.e(LOG_TAG, "LocationUpdate: " + "Response from server is failed", error);
                             if (error != null && error.networkResponse != null)
-                                Log.d("ResponseStatus:", "LocationUpdate Response status code : " + error.networkResponse.statusCode);
+                                Log.d(LOG_TAG, "ResponseStatus: LocationUpdate Response status code : " + error.networkResponse.statusCode);
                         }
                     }) {
                 @Override
@@ -267,13 +267,14 @@ public class DataSource {
                     headers.put(mainActivity.getString(R.string.hp_Installation_Id), getInstallationId());
                     return headers;
                 }
+
                 @Override
                 protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
                     if (response.statusCode >= 200 && response.statusCode < 300) {
                         Log.d(LOG_TAG, "Status code is success");
                         return Response.success(null, HttpHeaderParser.parseCacheHeaders(response));
                     } else {
-                        Log.d(LOG_TAG, "Status code is not success. Returning error response "+response.statusCode);
+                        Log.d(LOG_TAG, "Status code is not success. Returning error response " + response.statusCode);
                         return Response.error(new VolleyError(response));
                     }
                 }
@@ -309,6 +310,7 @@ public class DataSource {
     }
 
     public void eraseEmailData() {
+        Log.d(LOG_TAG, "Erasing email data");
         File directory = mainActivity.getFilesDir();
         File emailFile = new File(directory, "Email-Id");
         emailFile.delete();
@@ -318,9 +320,10 @@ public class DataSource {
                 br.write("");
                 br.close();
             } catch (IOException e) {
-                Log.d("GetWatchesResponse", "Error occurred while ERASING file data, app may not function properly. " + getStackTrace(e));
+                Log.d(LOG_TAG, "GetWatchesResponse: Error occurred while ERASING file data, app may not function properly. " + getStackTrace(e));
             }
         }
+        this.email = null;
 
     }
 
@@ -337,7 +340,7 @@ public class DataSource {
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 method,
-                mainActivity.getString(R.string.server_url) + url,
+                url,
                 jsonReq,
                 responseListener,
                 errorListener) {
@@ -354,12 +357,13 @@ public class DataSource {
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         MainActivity.queue.add(jsonObjectRequest);
+        MainActivity.queue.start();
     }
 
     public void sendStringRequest(int method, final String url, Response.Listener<String> responseListener, Response.ErrorListener errorListener) {
         StringRequest jsonObjectRequest = new StringRequest(
                 method,
-                mainActivity.getString(R.string.server_url) + url,
+                url,
                 responseListener,
                 errorListener) {
 
@@ -374,7 +378,9 @@ public class DataSource {
                 requestTimeOut,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        Log.d(LOG_TAG, "Sending request to : " + jsonObjectRequest.getUrl());
         MainActivity.queue.add(jsonObjectRequest);
+        MainActivity.queue.start();
     }
 
     public void addToWatch(String targetEmail) {

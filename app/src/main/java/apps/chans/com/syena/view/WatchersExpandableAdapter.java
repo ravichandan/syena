@@ -32,6 +32,8 @@ import apps.chans.com.syena.datasource.DataSource;
 import apps.chans.com.syena.web.request.WatchAccessRequest;
 import apps.chans.com.syena.web.response.GetWatchersResponse;
 
+import static apps.chans.com.syena.datasource.DataSource.requestTimeOut;
+
 /**
  * Created by sitir on 16-02-2017.
  */
@@ -132,7 +134,7 @@ public class WatchersExpandableAdapter extends BaseExpandableListAdapter {
                 ObjectMapper mapper = new ObjectMapper();
                 try {
                     JSONObject jsonObject = new JSONObject(mapper.writeValueAsString(watchAccessRequest));
-                    String url = watchersActivity.getString(R.string.server_url) + watchersActivity.getString(R.string.post_watch_access_url,DataSource.instance.getEmail());
+                    String url = watchersActivity.getString(R.string.server_url) + watchersActivity.getString(R.string.post_watch_access_url, DataSource.instance.getEmail());
                     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject, new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
@@ -162,10 +164,11 @@ public class WatchersExpandableAdapter extends BaseExpandableListAdapter {
                         }
                     };
                     jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
-                            60000,
+                            requestTimeOut,
                             DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                             DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
                     MainActivity.queue.add(jsonObjectRequest);
+                    MainActivity.queue.start();
                 } catch (JSONException e) {
                     Log.d(LOG_TAG, "Exception Occurred", e);
                 } catch (IOException e) {

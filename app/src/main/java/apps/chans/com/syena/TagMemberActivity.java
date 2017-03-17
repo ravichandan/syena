@@ -6,7 +6,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -49,9 +51,14 @@ public class TagMemberActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.tag_member_activity);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.tagMemberActivityToolbar);
+        setSupportActionBar(toolbar);
+        ActionBar ab = getSupportActionBar();
+        ab.setDisplayHomeAsUpEnabled(true);
     }
 
     public void generateCode(View view) {
+        Log.d(LOG_TAG, "In generateCode");
         final View popupView = getLayoutInflater().inflate(R.layout.generate_code_popup, null);
         final PopupWindow popupWindow = new PopupWindow(popupView, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, false);
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
@@ -63,8 +70,9 @@ public class TagMemberActivity extends AppCompatActivity {
 
             }
         });
-
-        dataSource.sendStringRequest(Request.Method.GET, getString(R.string.get_tag_code_url, dataSource.getEmail()), new Response.Listener<String>() {
+        String url = getString(R.string.server_url) + getString(R.string.get_tag_code_url, dataSource.getEmail());
+        Log.d(LOG_TAG, "Sending request to url: " + url);
+        dataSource.sendStringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(LOG_TAG, "Received response from server " + response);
@@ -144,7 +152,8 @@ public class TagMemberActivity extends AppCompatActivity {
                 submitButton.setEnabled(false);
                 TagByCodeRequest tagByCodeRequest = new TagByCodeRequest();
                 tagByCodeRequest.setTagCode(scanCodeText.getText().toString());
-                final String url = getString(R.string.post_tag_url, dataSource.getEmail());
+                String url = getString(R.string.server_url) + getString(R.string.post_tag_url, dataSource.getEmail());
+                Log.d(LOG_TAG, "Sending request to url: " + url);
                 dataSource.sendJsonRequest(Request.Method.POST, url, tagByCodeRequest, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
@@ -156,7 +165,7 @@ public class TagMemberActivity extends AppCompatActivity {
                             tagByCodeResponseLabel.setText("Empty response received from server");
                             return;
                         }
-                        Log.d(LOG_TAG, dataSource.getEmail() + " " + url + " Received response from server " + response.toString());
+                        Log.d(LOG_TAG, dataSource.getEmail() + " : post_tag_url: Received response from server " + response.toString());
 
                         ObjectMapper mapper = new ObjectMapper();
 
@@ -199,7 +208,7 @@ public class TagMemberActivity extends AppCompatActivity {
                                     break;
                             }
                         } catch (IOException e) {
-                            Log.d(LOG_TAG + "-ERROR", dataSource.getStackTrace(e));
+                            Log.d(LOG_TAG ,"TagCodeGenerationResponse-ERROR occurred while handling response", e);
                             tagByCodeResponseLabel.setText(getString(R.string.err_text_system_error));
                             submitButton.setEnabled(true);
                             return;
@@ -208,6 +217,7 @@ public class TagMemberActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        Log.d(LOG_TAG ,"TagCodeGenerationResponse-ERROR response received", error);
                         TextView tagByCodeResponseLabel = (TextView) popupView.findViewById(R.id.tagByCodeResponseLabel);
                         tagByCodeResponseLabel.setText(error.getLocalizedMessage());
                         submitButton.setEnabled(true);

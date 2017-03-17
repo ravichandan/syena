@@ -40,7 +40,7 @@
     <string name="email_qp">requester</string>
 
     <!--urls-->
-    <string name="server_url">http://117.201.218.138:7979/syena-system</string>
+    <string name="server_url">http://117.206.230.96:7979/syena-system</string>
     <string name="get_or_create_url">/member/get-or-create?requester=%1$s</string>
     <string name="location_update_url">/member/location</string>
     <string name="get_tag_code_url">/member/tag-code?requester=%1$s</string>

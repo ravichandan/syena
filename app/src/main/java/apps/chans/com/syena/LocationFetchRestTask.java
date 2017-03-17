@@ -123,8 +123,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
                     }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    Log.d(LOG_TAG, "Got error from server : " + error);
-                    Log.d(LOG_TAG, "Got error from server, details: " + getStackTrace(error));
+                    Log.d(LOG_TAG, "Got error from server : " , error);
                     incrementCount();
                 }
             }
@@ -141,7 +140,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
             try {
                 Thread.sleep(watch.getWatchConfiguration().getRefreshInterval() * 1000);
             } catch (InterruptedException e) {
-                Log.d(LOG_TAG + "-ERROR", e.getMessage() + e.getLocalizedMessage());
+                Log.d(LOG_TAG , "-ERROR", e);
             }
         }
         return null;

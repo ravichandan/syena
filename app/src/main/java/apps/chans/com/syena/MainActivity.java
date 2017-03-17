@@ -222,8 +222,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 try {
                     verifyResponse = mapper.readValue(response.toString(), EmailVerifyResponse.class);
                 } catch (IOException e) {
-                    Log.d(LOG_TAG, getStackTrace(e));
-                    dataSource.eraseEmailData();
+                    Log.d(LOG_TAG, "Error occured while rading EmailVerifyResponse", e);
+                    //dataSource.eraseEmailData();
                     //recreate();
                     return;
                 }
@@ -254,22 +254,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                 Log.d(LOG_TAG, "Error occurred while getting 'Installation-Id' from file, app may not function properly. " + getStackTrace(e));
                             }
                             showPinPopup(R.layout.pin_generate_popup, verifyResponse.getEmail());
-
                             break;
                         case EmailVerifyResponse.SUCCESS:
                             welcome();
                             break;
                         case EmailVerifyResponse.INVALID_EMAIL:
+                            Log.d(LOG_TAG, "EmailVerifyResponse: " + EmailVerifyResponse.INVALID_EMAIL);
                         case EmailVerifyResponse.NO_VALID_MEMBER_TXN:
+                            Log.d(LOG_TAG, "EmailVerifyResponse: " + EmailVerifyResponse.NO_VALID_MEMBER_TXN);
                         case EmailVerifyResponse.NO_VALID_MEMBER:
+                            Log.d(LOG_TAG, "EmailVerifyResponse: " + EmailVerifyResponse.NO_VALID_MEMBER);
                         case EmailVerifyResponse.SENDING_EMAIL_FAILED:
+                            Log.d(LOG_TAG, "EmailVerifyResponse: " + EmailVerifyResponse.SENDING_EMAIL_FAILED);
                         case EmailVerifyResponse.ERROR:
+                            Log.d(LOG_TAG, "EmailVerifyResponse: " + EmailVerifyResponse.ERROR);
                         default:
                             dataSource.eraseEmailData();
                             //recreate();
                             return;
                     }
                 } catch (Exception e) {
+                    Log.e(LOG_TAG, "Error occurred while analysing EmailVerifyResponse", e);
                     dataSource.eraseEmailData();
                     //recreate();
                     return;
@@ -279,7 +284,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onErrorResponse(VolleyError error) {
                 error.printStackTrace();
-                Log.d(LOG_TAG, "EmailVerifyResponse-Err, Error occured ", error);
+                Log.d(LOG_TAG, "In autoLogin, EmailVerifyResponse-Err, Error occured ", error);
+                //TODO analyze error and do the necessary like erasing email data for particular errors only.
                 dataSource.eraseEmailData();
                 //recreate();
                 return;
@@ -300,6 +306,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         queue.add(jsonObjectRequest);
+        queue.start();
     }
 
     private void showLoginPopup() {
@@ -420,7 +427,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         error.printStackTrace();
-                        Log.e(LOG_TAG, "EmailVerifyResponse-Err, Error occurred ", error);
+                        Log.e(LOG_TAG, "In showLoginPopup, EmailVerifyResponse-Err, Error occurred ", error);
                         TextView emailResponseLabelTextView = (TextView) loginView.findViewById(R.id.emailResponseLabel);
                         emailResponseLabelTextView.setText("System error occurred. Please try again");
                         pinSubmitButton.setText(getString(R.string.enter_text));
@@ -432,6 +439,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                         DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
                 queue.add(jsonObjectRequest);
+                queue.start();
                 //JSONObject response = future.get(60, TimeUnit.SECONDS);
 
             }
@@ -607,6 +615,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                         DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
                 queue.add(jsonObjectRequest);
+                queue.start();
             }
         });
 
@@ -684,7 +693,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Log.d(LOG_TAG, "Trying to connect mGoogleApiClient");
             mGoogleApiClient.connect();
         }
-        ImageView tagMemberIV= (ImageView) findViewById(R.id.tagMemberIV);
+        ImageView tagMemberIV = (ImageView) findViewById(R.id.tagMemberIV);
         tagMemberIV.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -751,7 +760,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 startActivity(intent);
                 result = true;
                 break;
-
+            case R.id.logout:
+                loggedInAlready=false;
+                dataSource.eraseEmailData();
+                recreate();
+                break;
             default:
                 result = super.onOptionsItemSelected(item);
         }

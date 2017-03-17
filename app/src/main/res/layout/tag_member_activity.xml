@@ -6,7 +6,16 @@
     tools:context=".TagMemberActivity"
     android:orientation="vertical">
 
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/tagMemberActivityToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary"
+        android:elevation="4sp"
+        android:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
 
+        ></android.support.v7.widget.Toolbar>
     <Button
         android:text="Generate Code"
         android:layout_width="381dp"

@@ -15,9 +15,10 @@ import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -26,6 +27,8 @@ import java.util.Map;
 import apps.chans.com.syena.datasource.DataSource;
 import apps.chans.com.syena.view.WatchersExpandableAdapter;
 import apps.chans.com.syena.web.response.GetWatchersResponse;
+
+import static apps.chans.com.syena.datasource.DataSource.requestTimeOut;
 
 /**
  * Created by sitir on 16-02-2017.
@@ -44,6 +47,7 @@ public class WatchersActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
+        getDataFromServer();
         watchersSwipeView = (SwipeRefreshLayout) findViewById(R.id.watchersSwipeView);
         watchersSwipeView.setColorSchemeResources(R.color.blue, R.color.green, R.color.orange);
         watchersSwipeView.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -57,20 +61,19 @@ public class WatchersActivity extends AppCompatActivity {
                 }, 2000);
             }
         });
-        getDataFromServer();
 
     }
 
     public void getDataFromServer() {
         String url = getString(R.string.server_url) + getString(R.string.get_watchers_url, DataSource.instance.getEmail());
         Log.d(LOG_TAG, "URL : " + url);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
             @Override
-            public void onResponse(String response) {
-                Log.d(LOG_TAG, "GetWatchersResponse - Received response from server : " + response);
+            public void onResponse(JSONObject response) {
+                Log.d(LOG_TAG, "GetWatchersResponse - Received response from server : " + response.toString());
                 ObjectMapper mapper = new ObjectMapper();
                 try {
-                    GetWatchersResponse getWatchersResponse = mapper.readValue(response, GetWatchersResponse.class);
+                    GetWatchersResponse getWatchersResponse = mapper.readValue(response.toString(), GetWatchersResponse.class);
                     if (getWatchersResponse != null) {
                         ExpandableListView expandableListView = (ExpandableListView) findViewById(R.id.watchers_expandable_list_view);
 
@@ -99,12 +102,12 @@ public class WatchersActivity extends AppCompatActivity {
                 return headers;
             }
         };
-        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
-                60000,
+        jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
+                requestTimeOut,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        MainActivity.queue.add(stringRequest);
-
+        MainActivity.queue.add(jsonObjectRequest);
+        MainActivity.queue.start();
     }
 
 }

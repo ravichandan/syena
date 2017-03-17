@@ -162,7 +162,7 @@ public class WatchExpandableAdapter extends BaseExpandableListAdapter {
                                 Log.d(LOG_TAG, "Starting async task for watch " + currWatch);
                                 String url = mainActivity.getString(R.string.server_url) + mainActivity.getString(R.string.get_location_request_url, currWatch.getSource().getEmail(), currWatch.getTarget().getEmail());
                                 LocationFetchRestTask rt = new LocationFetchRestTask(adapter, queue, currWatch, url);
-                                rt.execute();
+                                rt.executeOnExecutor(LocationFetchRestTask.THREAD_POOL_EXECUTOR);
                                 return Response.success(null, HttpHeaderParser.parseCacheHeaders(response));
 
                             } else {

@@ -11,9 +11,10 @@
     tools:context="apps.chans.com.syena.MainActivity">
 
     <RelativeLayout
+        android:id="@+id/mainToolbarLayout"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:id="@+id/mainToolbarLayout">
+        android:layout_height="?attr/actionBarSize">
+
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/mainToolbar"
@@ -30,23 +31,26 @@
             android:id="@+id/tagMemberIV"
             android:layout_width="60sp"
             android:layout_height="60sp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
             android:adjustViewBounds="true"
             android:foregroundGravity="bottom|right"
             android:onClick="tagMember"
-            android:src="@mipmap/eagle_2"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentEnd="true" />
+            android:src="@mipmap/eagle_2" />
 
-        <ExpandableListView
-            android:id="@+id/expandableListView"
-            style="@style/Widget.AppCompat.ListView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:footerDividersEnabled="true"
-            android:headerDividersEnabled="true"
-            android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft"
-            android:layout_above="@+id/tagMemberIV"
-            android:layout_alignParentStart="true" />
+
+            <ExpandableListView
+                android:id="@+id/expandableListView"
+                style="@style/Widget.AppCompat.ListView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@+id/tagMemberIV"
+                android:layout_alignParentStart="false"
+                android:layout_below="@+id/mainToolbar"
+                android:footerDividersEnabled="true"
+                android:headerDividersEnabled="true"
+                android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft"
+                android:nestedScrollingEnabled="true"/>
     </RelativeLayout>
 
     <!--<RelativeLayout
