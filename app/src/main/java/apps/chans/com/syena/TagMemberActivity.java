@@ -62,6 +62,7 @@ public class TagMemberActivity extends AppCompatActivity {
         final View popupView = getLayoutInflater().inflate(R.layout.generate_code_popup, null);
         final PopupWindow popupWindow = new PopupWindow(popupView, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT, false);
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+        popupWindow.setOutsideTouchable(true);
         Button closeButton = (Button) popupView.findViewById(R.id.generateCodeCloseButton);
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override

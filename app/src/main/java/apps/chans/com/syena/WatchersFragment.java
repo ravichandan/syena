@@ -3,11 +3,12 @@ package apps.chans.com.syena;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ExpandableListView;
 
 import com.android.volley.AuthFailureError;
@@ -25,30 +26,37 @@ import java.util.HashMap;
 import java.util.Map;
 
 import apps.chans.com.syena.datasource.DataSource;
-import apps.chans.com.syena.view.WatchersExpandableAdapter;
+import apps.chans.com.syena.view.WatchersExpandableListAdapter;
 import apps.chans.com.syena.web.response.GetWatchersResponse;
 
 import static apps.chans.com.syena.datasource.DataSource.requestTimeOut;
 
 /**
- * Created by sitir on 16-02-2017.
+ * Created by sitir on 18-03-2017.
  */
 
-public class WatchersActivity extends AppCompatActivity {
+public class WatchersFragment extends Fragment {
     private String LOG_TAG = getClass().getSimpleName();
+
     private SwipeRefreshLayout watchersSwipeView;
+    private View baseView;
+
+    public WatchersFragment() {
+    }
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        Log.d(LOG_TAG, "In onCreate of WatchersActivity");
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.watchers_container);
-       /* Toolbar toolbar = (Toolbar) findViewById(R.id.watchersToolbar);
-        setSupportActionBar(toolbar);*/
-        ActionBar ab = getSupportActionBar();
-        ab.setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "In onCreateView() ");
+        baseView = inflater.inflate(R.layout.watchers_container, container,false);
+
         getDataFromServer();
-        watchersSwipeView = (SwipeRefreshLayout) findViewById(R.id.watchersSwipeView);
+        watchersSwipeView = (SwipeRefreshLayout) baseView.findViewById(R.id.watchersSwipeView);
         watchersSwipeView.setColorSchemeResources(R.color.blue, R.color.green, R.color.orange);
         watchersSwipeView.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -57,14 +65,23 @@ public class WatchersActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         getDataFromServer();
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } finally {
+                            watchersSwipeView.setRefreshing(false);
+                        }
+
                     }
                 }, 2000);
             }
         });
-
+        return baseView;
     }
 
     public void getDataFromServer() {
+        Log.d(LOG_TAG, "Getting data from server.");
         String url = getString(R.string.server_url) + getString(R.string.get_watchers_url, DataSource.instance.getEmail());
         Log.d(LOG_TAG, "URL : " + url);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -75,9 +92,9 @@ public class WatchersActivity extends AppCompatActivity {
                 try {
                     GetWatchersResponse getWatchersResponse = mapper.readValue(response.toString(), GetWatchersResponse.class);
                     if (getWatchersResponse != null) {
-                        ExpandableListView expandableListView = (ExpandableListView) findViewById(R.id.watchers_expandable_list_view);
+                        ExpandableListView expandableListView = (ExpandableListView) baseView.findViewById(R.id.watchers_expandable_list_view);
 
-                        WatchersExpandableAdapter wAdapter = new WatchersExpandableAdapter(WatchersActivity.this, R.layout.watchers_group_view, R.layout.watchers_list_view, getWatchersResponse);
+                        WatchersExpandableListAdapter wAdapter = new WatchersExpandableListAdapter(WatchersFragment.this, R.layout.watchers_group_view, R.layout.watchers_list_view, getWatchersResponse);
                         expandableListView.setAdapter(wAdapter);
                     }
 
@@ -109,5 +126,4 @@ public class WatchersActivity extends AppCompatActivity {
         MainActivity.queue.add(jsonObjectRequest);
         MainActivity.queue.start();
     }
-
 }

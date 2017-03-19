@@ -1,20 +1,13 @@
 package apps.chans.com.syena;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -23,13 +16,9 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ExpandableListView;
-import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
@@ -45,13 +34,6 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
@@ -64,8 +46,11 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.ConnectException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +58,6 @@ import java.util.Map;
 import apps.chans.com.syena.datasource.DataSource;
 import apps.chans.com.syena.entities.Member;
 import apps.chans.com.syena.entities.Watch;
-import apps.chans.com.syena.view.WatchExpandableAdapter;
 import apps.chans.com.syena.web.request.PinValidationRequest;
 import apps.chans.com.syena.web.response.EmailVerifyResponse;
 import apps.chans.com.syena.web.response.PinValidationResponse;
@@ -84,41 +68,27 @@ import static apps.chans.com.syena.datasource.DataSource.requestTimeOut;
 //import static apps.chans.com.syena.datasource.DataSource.longitude;
 
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class MainActivity extends AppCompatActivity {
     public static DataSource dataSource;
     public static RequestQueue queue;
     private static boolean loggedInAlready;
-    LocationRequest mLocationRequest;
-    GoogleApiClient mGoogleApiClient;
-    Location mCurrentLocation;
-    String mLastUpdateTime;
-    MyLocationHandler locationHandler;
-    private int TAG_MEMBER_RESULT = 1;
-    private float[] mGravity = new float[3];
-    private float[] mGeomagnetic = new float[3];
-    private WatchExpandableAdapter adapter;
-    private ExpandableListView expandableListView;
-    private SwipeRefreshLayout activity_main;
-    private String LOG_TAG = MainActivity.class.getSimpleName();
-    private SensorManager sensorManager;
-    private Sensor accelerometer;
-    private Sensor magnetometer;
 
-    protected void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000 * 10);
-        mLocationRequest.setFastestInterval(1000 * 5);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setSmallestDisplacement(1);
-    }
+
+    //private WatchExpandableAdapter adapter;
+    //private ExpandableListView expandableListView;
+    //private SwipeRefreshLayout activity_main;
+    private String LOG_TAG = MainActivity.class.getSimpleName();
+    private WatchFragment watchFragment;
+    private WatchersFragment watchersFragment;
+    private ViewPager viewPager;
+    private TabLayout tabLayout;
+    private int TAG_MEMBER_RESULT = 1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(LOG_TAG, "In onCreate, savedInstanceState: " + savedInstanceState);
         super.onCreate(savedInstanceState);
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
        /* boolean accel = sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         boolean magnet = sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
         boolean gyro = sensorManager.registerListener(
@@ -167,45 +137,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(LOG_TAG, "onStart is called");
-        if (mGoogleApiClient != null) {
-            Log.d(LOG_TAG, "Trying to connect mGoogleApiClient");
-            mGoogleApiClient.connect();
-        }
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        //for system oriented sensor listeners
-        boolean accel = sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        boolean magnet = sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
-        //boolean gyro = sensorManager.registerListener(this,sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),SensorManager.SENSOR_DELAY_NORMAL);
-        //Log.d(LOG_TAG, "results of listener registers: " + accel + magnet);
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected() && locationHandler != null) {
-            locationHandler.startLocationUpdates();
-            Log.d(LOG_TAG, "Location update resumed .....................");
-        }
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         // to stop the listener and save battery
-        sensorManager.unregisterListener(this);
-        if (locationHandler != null) locationHandler.stopLocationUpdates();
+
 
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        Log.d(LOG_TAG, "onStop is called");
-        if (mGoogleApiClient != null) {
-            Log.d(LOG_TAG, "Trying to disconnect mGoogleApiClient");
-            mGoogleApiClient.disconnect();
-        }
+
         queue.stop();
 
     }
@@ -222,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 try {
                     verifyResponse = mapper.readValue(response.toString(), EmailVerifyResponse.class);
                 } catch (IOException e) {
-                    Log.d(LOG_TAG, "Error occured while rading EmailVerifyResponse", e);
+                    Log.d(LOG_TAG, "Error occured while reading EmailVerifyResponse", e);
                     //dataSource.eraseEmailData();
                     //recreate();
                     return;
@@ -256,7 +209,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             showPinPopup(R.layout.pin_generate_popup, verifyResponse.getEmail());
                             break;
                         case EmailVerifyResponse.SUCCESS:
-                            welcome();
                             break;
                         case EmailVerifyResponse.INVALID_EMAIL:
                             Log.d(LOG_TAG, "EmailVerifyResponse: " + EmailVerifyResponse.INVALID_EMAIL);
@@ -279,6 +231,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     //recreate();
                     return;
                 }
+                welcome();
             }
         }, new Response.ErrorListener() {
             @Override
@@ -286,6 +239,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 error.printStackTrace();
                 Log.d(LOG_TAG, "In autoLogin, EmailVerifyResponse-Err, Error occured ", error);
                 //TODO analyze error and do the necessary like erasing email data for particular errors only.
+                if (error != null && error.getCause() != null) {
+                    if (error.getCause() instanceof InterruptedIOException || error.getCause() instanceof ConnectException) {
+                        Log.d(LOG_TAG, "Error is caused by InterruptedIOException");
+                        return;
+                    }
+                }
                 dataSource.eraseEmailData();
                 //recreate();
                 return;
@@ -651,11 +610,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (dataSource.currentMember == null)
             dataSource.currentMember = new Member(dataSource.getEmail());
 
-        setContentView(R.layout.activity_main);
-        activity_main = (SwipeRefreshLayout) findViewById(R.id.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.mainToolbar);
+        setContentView(R.layout.syena_main);
+        //activity_main = (SwipeRefreshLayout) findViewById(R.id.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.syenaMainToolbar);
         setSupportActionBar(toolbar);
-        activity_main.setColorSchemeResources(R.color.blue, R.color.green, R.color.orange);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
+        ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
+        if (watchFragment == null) watchFragment = new WatchFragment();
+        if (watchersFragment == null) watchersFragment = new WatchersFragment();
+        viewPagerAdapter.addFragment(watchFragment, "Friends");
+        viewPagerAdapter.addFragment(watchersFragment, "who's watching u");
+        viewPager.setAdapter(viewPagerAdapter);
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.setupWithViewPager(viewPager);
+
+     /*           activity_main.setColorSchemeResources(R.color.blue, R.color.green, R.color.orange);
         activity_main.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -700,68 +670,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 tagMember(v);
             }
         });
-        /*LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        String provider = lm.getBestProvider(criteria, true);
-        Log.d(LOG_TAG, "Selected provider : " + provider);
-        LocationListener locationHandler = new MyLocationHandler();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            Log.d(LOG_TAG, "Permissions are not available");
-            return;
-        } else {
-            Log.d(LOG_TAG, "Permissions are  available");
-        }
-        if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER))
-            Log.d(LOG_TAG, "GPS is enabled in this servicee");
-        if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
-            Log.d(LOG_TAG, "NETWORK_PROVIDER is enabled in this servicee");
-        if (!lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) && !lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            startActivity(intent);
-            return;
-        }
-        Location lastGpsLocation = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        Location lastNtwLocation = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        Log.d(LOG_TAG, "Last known location " + lastGpsLocation);
-        Log.d(LOG_TAG, "Last known location network provider " + lastNtwLocation);
-        if (lastGpsLocation != null || lastNtwLocation != null) {
-            if (lastNtwLocation != null && lastGpsLocation != null) {
-                if (lastNtwLocation.getTime() > lastGpsLocation.getTime())
-                    locationHandler.onLocationChanged(lastNtwLocation);
-                else
-                    locationHandler.onLocationChanged(lastGpsLocation);
-            }
-            if (lastNtwLocation != null) locationHandler.onLocationChanged(lastNtwLocation);
-            else locationHandler.onLocationChanged(lastGpsLocation);
-        }
 
-
-        lm.requestLocationUpdates(provider, 400, 1f, locationHandler);*/
-//        expandableListView.setChoiceMode(ExpandableListView.CHOICE_MODE_MULTIPLE);
         dataSource.getWatchList(true);
-
+*/
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         boolean result = false;
         switch (item.getItemId()) {
-            case R.id.getWatchersItemMenu:
-                //Call server to get watchers
-                Intent intent = new Intent(this, WatchersActivity.class);
-                startActivity(intent);
+            //  case R.id.getWatchersItemMenu:
+            //Call server to get watchers
+            //   Intent intent = new Intent(this, WatchersActivity.class);
+            ///    startActivity(intent);
+            //   result = true;
+            //     break;
+            case R.id.tagMemberMenu:
+                Intent tagMemberIntent = new Intent(this, TagMemberActivity.class);
+                startActivityForResult(tagMemberIntent, TAG_MEMBER_RESULT);
                 result = true;
                 break;
             case R.id.logout:
-                loggedInAlready=false;
+                loggedInAlready = false;
                 dataSource.eraseEmailData();
                 recreate();
                 break;
@@ -779,17 +709,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return true;
     }
 
-    public void tagMember(View view) {
-        Log.d(LOG_TAG, "In tagMember");
-        Intent intent = new Intent(this, TagMemberActivity.class);
-        startActivityForResult(intent, TAG_MEMBER_RESULT);
-    }
-
-
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == TAG_MEMBER_RESULT && resultCode == Activity.RESULT_OK) {
-            adapter.notifyDataSetChanged();
+            notifyWatchesDataSet();
             List<Watch> watchList = dataSource.getWatchList();
             System.out.print(watchList);
         }
@@ -865,197 +788,46 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    public void notifyWatchesDataSet() {
-        Log.d(LOG_TAG, "Notifying dataset for watches");
-        if (adapter != null)
-            adapter.notifyDataSetChanged();
-    }
 
     public void stopSwipeRefresh() {
-        Log.d(LOG_TAG, "Stopping refreshing of swipeview");
-        if (activity_main != null) {
-            activity_main.setRefreshing(false);
-            Log.d(LOG_TAG, "Stopped refreshing of swipeview, and swipeview status is " + activity_main.isRefreshing());
-        }
-
+        if (watchFragment != null) watchFragment.stopSwipeRefresh();
+        //if(watchersFragment!=null)watchersFragment.stop
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        float degree = 0;
-        float data[] = null;
-        // float[] mGData = new float[3];
-        //float[] mMData = new float[3];
-
-        boolean ready = false;
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            data = mGravity;
-
-        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            data = mGeomagnetic;
-        } else return;
-
-        for (int i = 0; i < 3; i++)
-            data[i] = event.values[i];
-
-        if (mGravity != null && mGeomagnetic != null) {
-            float R[] = new float[16];
-            float I[] = new float[16];
-            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-            //Log.d(LOG_TAG, "rotation matrix result=" + success);
-            if (success) {
-                float orientation[] = new float[3];
-                SensorManager.getOrientation(R, orientation);
-                // Log.d(LOG_TAG, "orientation vals: " + orientation[0] + " " + orientation[1] + " " + orientation[2]);
-                degree = orientation[0]; // orientation contains: azimut, pitch and roll
-            }
-        }
-        //Log.d(LOG_TAG, "Azimuth: " + degree);
-        // = Math.round(event.values[0]);
-        //Log.d(LOG_TAG, "In onSensorChanged, degree: " + degree);
-        if (dataSource.currentMember != null) {
-            dataSource.currentMember.setDegree(degree);
-            for (Member member : dataSource.currentMember.getWatchMap().keySet())
-                setPointer(member);
-        }
+    public void notifyWatchesDataSet() {
+        Log.d(LOG_TAG,"Notifying 'watchesDataSet' ");
+        if (watchFragment != null) watchFragment.notifyWatchesDataSet();
     }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        //not in scope for now
-    }
+    class ViewPagerAdapter extends FragmentPagerAdapter {
 
-    public void setPointer(Member target) {
-        if (!dataSource.currentMember.getWatchMap().get(target).isActive())
-            return;
-        double lat2 = dataSource.currentMember.getLatitude();
-        double lat1 = target.getLatitude();
-        double lon2 = dataSource.currentMember.getLongitude();
-        double lon1 = target.getLongitude();
-        //Log.d(LOG_TAG, "In setPointer" + target.getEmail() + " " + lat1 + " " + lon1 + " " + lat2 + " " + lon2);
-        double dLat = Math.toRadians(lat1 - lat2);
-        double dLon = Math.toRadians(lon1 - lon2);
+        private List<Fragment> fragmentList = new ArrayList<>();
+        private List<String> fragmentTitleList = new ArrayList<>();
 
-        //lat1 = Math.toRadians(lat1);
-        //lat2 = Math.toRadians(lat2);
-
-        //double y = Math.sin(dLon) * Math.cos(lat2);
-        //double x = Math.cos(lat1) * Math.sin(lat2) -
-        //        Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-        double brng = Math.toDegrees(Math.atan2(dLon, dLat));
-        //Log.d(LOG_TAG,"Brng "+brng);
-        //Log.d("SetPointer", "Curr: "+dataSource.currentMember.getEmail()+" target : "+target.getEmail()+" Brng " + brng + " dLon " + dLon + " dLat " + dLat + " lat1 " + lat1 + " lat2 " + lat2 + " lon1 " + lon1 + " lon2 " + lon2);
-        // fix negative degrees
-        if (brng < 0) {
-            //    brng = 360 + brng;
-        }
-
-        float degree = (float) brng - (dataSource.currentMember.getDegree() * (float) (180.0f / Math.PI));//-(float) brng ;
-        //Log.d(LOG_TAG,"degree "+degree);
-
-        if (degree < 0) degree = degree + 360;
-
-        // create a rotation animation (reverse turn degree degrees)
-        RotateAnimation ra = new RotateAnimation(
-                dataSource.currentMember.getDegree(),
-                degree,
-                Animation.RELATIVE_TO_SELF, 0.5f,
-                Animation.RELATIVE_TO_SELF,
-                0.5f);
-
-        // how long the animation will take place
-        ra.setDuration(0);
-
-        // set the animation after the end of the reservation status
-        ra.setFillAfter(true);
-
-        // Start the animation
-        if (dataSource.currentMember.getWatchMap().get(target) != null
-                && dataSource.currentMember.getWatchMap().get(target).getViewHolder() != null
-                && dataSource.currentMember.getWatchMap().get(target).getViewHolder().compassPointer != null) {
-            //dataSource.currentMember.getWatchMap().get(target).getViewHolder().compassPointer.startAnimation(ra);
-            //Log.d(LOG_TAG, target.getEmail() + " Rotating image by degree: " + degree);
-            dataSource.currentMember.getWatchMap().get(target).getViewHolder().compassPointer.setRotation(degree);
-        }
-        //dataSource.currentMember.setDegree(-degree);
-    }
-
-    private class MyLocationHandler implements LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
-
-        public MyLocationHandler() {
-            Log.d(LOG_TAG, "In location listener");
+        public ViewPagerAdapter(FragmentManager fm) {
+            super(fm);
         }
 
         @Override
-        public void onLocationChanged(Location location) {
-            Log.d(LOG_TAG, "onLocationChanged : " + location.getLatitude() + ", " + location.getLongitude() + ", " + location.getAltitude());
-            dataSource.currentMember.setLatitude(location.getLatitude());
-            dataSource.currentMember.setLongitude(location.getLongitude());
-
-            // Intent email = new Intent(Intent.ACTION_SEND);
-            // email.putExtra(Intent.EXTRA_EMAIL, new String[]{"chandan.ravi1987@gmail.com"});
-            //email.putExtra(Intent.EXTRA_SUBJECT, "Location changed");
-            //  email.putExtra(Intent.EXTRA_TEXT, "location changed, latitude : " + latitude + ", longitude : " + longitude + ", altitude : " + location.getAltitude());
-
-            //need this to prompts email client only
-            // email.setType("message/rfc822");
-
-            // startActivity(Intent.createChooser(email, "Choose an Email client :"));
-
-            dataSource.updateLocation(dataSource.currentMember.getLatitude(), dataSource.currentMember.getLongitude(), location.getAltitude());
-        }
-
-
-        @Override
-        public void onConnected(@Nullable Bundle bundle) {
-            Log.d(LOG_TAG, "In onConnected of MyLocationHandler");
-            startLocationUpdates();
-        }
-
-        public void startLocationUpdates() {
-            Log.d(LOG_TAG, "In startLocationUpdates, checking for permissions");
-
-            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED
-                    && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                Log.d(LOG_TAG, "In startLocationUpdates, Permissions are not available");
-
-                return;
-            }
-            Log.d(LOG_TAG, "In startLocationUpdates, permissions are available.");
-
-            if (mGoogleApiClient != null && mLocationRequest != null) {
-                Log.d(LOG_TAG, "In startLocationUpdates, Requesting location updates");
-
-                PendingResult<Status> pendingResult =
-                        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-            }
+        public Fragment getItem(int position) {
+            if (position < fragmentList.size())
+                return fragmentList.get(position);
+            return null;
         }
 
         @Override
-        public void onConnectionSuspended(int i) {
-            Log.d(LOG_TAG, "In onConnectionSuspended of MyLocationHandler");
+        public int getCount() {
+            return fragmentList.size();
+        }
 
+        public void addFragment(Fragment fragment, String title) {
+            fragmentList.add(fragment);
+            fragmentTitleList.add(title);
         }
 
         @Override
-        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-            Log.d(LOG_TAG, "In onConnectionFailed of MyLocationHandler");
-
-        }
-
-        protected void stopLocationUpdates() {
-            LocationServices.FusedLocationApi.removeLocationUpdates(
-                    mGoogleApiClient, this);
-            Log.d(LOG_TAG, "Location update stopped .......................");
+        public CharSequence getPageTitle(int position) {
+            return fragmentTitleList.get(position);
         }
     }
 }

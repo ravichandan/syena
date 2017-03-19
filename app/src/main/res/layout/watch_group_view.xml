@@ -22,7 +22,7 @@
             android:textIsSelectable="false"
             android:ellipsize="end"
             android:maxLines="1"
-            android:paddingLeft="?android:attr/expandableListPreferredItemPaddingLeft"
+
             />
         <TextView
             android:layout_width="wrap_content"
@@ -30,7 +30,7 @@
             android:id="@+id/smallStatusText"
             android:textStyle="normal|italic"
             android:maxLines="1"
-            android:paddingLeft="?android:attr/expandableListPreferredItemPaddingLeft"
+
             />
     </LinearLayout>
     <Switch

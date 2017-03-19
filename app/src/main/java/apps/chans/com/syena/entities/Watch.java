@@ -5,6 +5,7 @@ import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import apps.chans.com.syena.LocationFetchRestTask;
 import apps.chans.com.syena.R;
 
 /**
@@ -33,8 +34,8 @@ public class Watch implements Comparable<Watch> {
     }
 
     public ViewHolder getViewHolder() {
-        if (viewHolder != null)
-            viewHolder.startSwitch.setChecked(active);
+//        if (viewHolder != null)
+  //          viewHolder.startSwitch.setChecked(active);
         return viewHolder;
     }
 
@@ -121,6 +122,7 @@ public class Watch implements Comparable<Watch> {
         public TextView displayNameTextView;
         public View view;
         public ImageView compassPointer;
+        public LocationFetchRestTask locationFetchRestTask;
 
         public ViewHolder(View view) {
             this.view = view;

@@ -36,12 +36,19 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
     private int retries = 10, count = 0;
 
     public LocationFetchRestTask(WatchExpandableAdapter adapter, RequestQueue queue, Watch watch, String url) {
+        Log.d(LOG_TAG,"In Constructor");
         this.adapter = adapter;
         this.queue = queue;
         this.watch = watch;
         this.url = url;
+        if (watch.getViewHolder() != null && watch.getViewHolder().locationFetchRestTask != null) {
+            watch.getViewHolder().locationFetchRestTask.count = retries+10;
+        }
     }
 
+    public void endTask(){
+        count = retries+10;
+    }
     /*
      * Calculate distance between two points in latitude and longitude taking
      * into account height difference. If you are not interested in height
@@ -78,7 +85,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
 
     @Override
     protected Void doInBackground(Object... params) {
-        Log.d(LOG_TAG,"In doInBackground");
+        Log.d(LOG_TAG, "In doInBackground");
         if (watch.getSource() == null || watch.getTarget() == null) return null;
         Log.d(LOG_TAG, "Started background job for " + watch);
         //final String targetEmail = watch.getTarget().getEmail();
@@ -123,7 +130,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
                     }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    Log.d(LOG_TAG, "Got error from server : " , error);
+                    Log.d(LOG_TAG, "Got error from server : ", error);
                     incrementCount();
                 }
             }
@@ -140,7 +147,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
             try {
                 Thread.sleep(watch.getWatchConfiguration().getRefreshInterval() * 1000);
             } catch (InterruptedException e) {
-                Log.d(LOG_TAG , "-ERROR", e);
+                Log.d(LOG_TAG, "-ERROR", e);
             }
         }
         return null;

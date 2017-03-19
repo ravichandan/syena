@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <item
-        android:id="@+id/getWatchersItemMenu"
-        android:icon="@drawable/watchers_image"
-        android:title="Who's watching you"
+        android:id="@+id/tagMemberMenu"
+        android:icon="@drawable/plus_sign_4"
+        android:title="Tag a friend"
         app:showAsAction="ifRoom|collapseActionView"
-        app:title="Who's watching you"></item>
+        app:title="Tag a friend"></item>
+
     <item
         android:id="@+id/logout"
         android:icon="@drawable/logout"

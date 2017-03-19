@@ -23,11 +23,10 @@
     <!--text messages-->
     <string name="choose_time_interval">Choose Time Interval</string>
     <string name="defaultStatusMessage">Fetching location</string>
-    <string name="statusMessage">%1$s - %2$f meters away</string>
+    <string name="statusMessage">%1$s - %2$.1f %3$s away</string>
     <string name="errorStatusMessage">Could not get the location</string>
-    <string name="defaultDetailedMessage">Fetching the detailed status...Fetching the detailed status...Fetching the detailed status...
-    Fetching the detailed status...Fetching the detailed status&#8230;</string>
-    <string name="detailedMessage">%1$s is %2$s and is %3$f meters away from your location. The latitude, longitude and altitude are %4$f,%5$f and %6$f respectively.</string>
+    <string name="defaultDetailedMessage">Fetching the detailed status&#8230;</string>
+    <string name="detailedMessage">Approx. %1$.1f %2$s away. Last identified location- %3$f,%4$f.</string>
     <string name="pin_generate_text">A 4-digit pin has been generated and sent to you requesterEmail address. Please enter that pin in the following text box.</string>
     <string name="sendingText">Sending</string>
     <string name="enter_text">Enter</string>
@@ -40,7 +39,7 @@
     <string name="email_qp">requester</string>
 
     <!--urls-->
-    <string name="server_url">http://117.206.230.96:7979/syena-system</string>
+    <string name="server_url">http://117.201.222.211:7979/syena-system</string>
     <string name="get_or_create_url">/member/get-or-create?requester=%1$s</string>
     <string name="location_update_url">/member/location</string>
     <string name="get_tag_code_url">/member/tag-code?requester=%1$s</string>

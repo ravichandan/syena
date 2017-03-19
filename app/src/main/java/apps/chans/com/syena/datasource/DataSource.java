@@ -156,14 +156,18 @@ public class DataSource {
                             Watch watch = new Watch(currentMember, target);
                             if (currentMember.getWatchMap().get(target) != null) {
                                 watch.setViewHolder(currentMember.getWatchMap().get(target).getViewHolder());
+                                if (currentMember.getWatchMap().get(target).getViewHolder().locationFetchRestTask != null)
+                                    currentMember.getWatchMap().get(target).getViewHolder().locationFetchRestTask.endTask();
                             }
+                            watch.setActive(entry.isWatchActive());
                             currentMember.getWatchMap().put(target, watch);
                             wl.add(watch);
                         }
+                        Log.d(LOG_TAG, "Resetting watchList");
                         getWatchList().clear();
                         getWatchList().addAll(wl);
                         try {
-                            mainActivity.stopSwipeRefresh();
+                            //mainActivity.stopSwipeRefresh();
                             mainActivity.notifyWatchesDataSet();
                             mainActivity.stopSwipeRefresh();
                         } finally {
@@ -192,6 +196,7 @@ public class DataSource {
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         MainActivity.queue.add(jsonObjectRequest);
+        MainActivity.queue.start();
 
     }
 
@@ -393,6 +398,18 @@ public class DataSource {
 
         if (!getWatchList().contains(currentMember.getWatchMap().get(target)))
             getWatchList().add(currentMember.getWatchMap().get(target));
+    }
+
+    public void makeAllWatchesInactive() {
+        for (Watch w : getWatchList()) w.setActive(false);
+    }
+    public void endAllLocationFetchTasks() {
+        for (Watch w : getWatchList()) {
+            if(w.getViewHolder()!=null&&w.getViewHolder().locationFetchRestTask!=null){
+                w.getViewHolder().locationFetchRestTask.endTask();
+                w.getViewHolder().locationFetchRestTask=null;
+            }
+        }
     }
 
     private class MyJsonRequest extends JsonObjectRequest {

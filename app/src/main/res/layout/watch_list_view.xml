@@ -14,21 +14,23 @@
         android:paddingLeft="?android:attr/expandableListPreferredChildPaddingLeft" />
 
     <ImageView
-        android:layout_width="wrap_content"
-        app:srcCompat="@drawable/compass_pointer_2"
-        android:id="@+id/compassPointerImageView"
-        android:layout_weight="1"
-        android:layout_below="@+id/detailStatusText"
-        android:layout_alignParentStart="true"
-        android:layout_height="300sp" />
-
-    <ImageView
         android:id="@+id/configImage"
         android:layout_width="40sp"
         android:layout_height="40sp"
         android:src="@mipmap/config_icon"
         android:onClick="configureWatch"
         android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true" />
+
+    <ImageView
+        app:srcCompat="@drawable/compass_pointer_2"
+        android:id="@+id/compassPointerImageView"
+        android:layout_weight="1"
+        android:layout_height="250sp"
+        android:layout_width="300sp"
+        android:foregroundGravity="center_vertical|center_horizontal|center"
+        android:layout_marginEnd="28dp"
+        android:layout_below="@+id/detailStatusText"
         android:layout_alignParentEnd="true" />
 
 </RelativeLayout>
