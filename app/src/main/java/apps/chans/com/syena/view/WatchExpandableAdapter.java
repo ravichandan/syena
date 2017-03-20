@@ -1,5 +1,6 @@
 package apps.chans.com.syena.view;
 
+import android.app.Activity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -258,7 +259,9 @@ public class WatchExpandableAdapter extends BaseExpandableListAdapter {
 
     public void updateWatchErrorStatus(Watch watch) {
         watch.getWatchStatus().setCode(WatchStatus.ENDED);
-        watch.getWatchStatus().setMessage(mainActivity.getString(R.string.errorStatusMessage));
+        Activity activity = mainActivity.getActivity();
+        if (activity != null && mainActivity.isAdded())
+            watch.getWatchStatus().setMessage(mainActivity.getString(R.string.errorStatusMessage));
         watch.getWatchStatus().setDescription("Call to server failed even after several retries. Please check the network settings or logs. If issue still persists contact support team.");
     }
 
@@ -269,39 +272,42 @@ public class WatchExpandableAdapter extends BaseExpandableListAdapter {
         if (dist > 1609) {
             distance = dist * 0.000621371192;
         }
-        if (distance > allowedDistance - 1 && distance < allowedDistance) {
-            watch.getWatchStatus().setCode(WatchStatus.AT_BORDER);
-            watch.getWatchStatus().setMessage(mainActivity.getResources().getString(R.string.statusMessage, "At Border", distance, (distance == dist) ? "mts" : "miles"));
-            watch.getWatchStatus().setDescription(
-                    mainActivity.getResources().getString(
-                            R.string.detailedMessage,
-                            distance,
-                            (distance == dist) ? "mts" : "miles",
-                            watch.getTarget().getLatitude(),
-                            watch.getTarget().getLongitude()));
-        } else if (distance > allowedDistance) {
-            watch.getWatchStatus().setCode(WatchStatus.OUT_OF_RANGE);
-            watch.getWatchStatus().setMessage(mainActivity.getResources().getString(R.string.statusMessage, "Out Of Range", distance, (distance == dist) ? "mts" : "miles"));
-            watch.getWatchStatus().setDescription(
-                    mainActivity.getResources().getString(
-                            R.string.detailedMessage,
-                            distance,
-                            (distance == dist) ? "mts" : "miles",
-                            watch.getTarget().getLatitude(),
-                            watch.getTarget().getLongitude()));
+        Activity activity = mainActivity.getActivity();
+        if (activity != null && mainActivity.isAdded()) {
+            if (distance > allowedDistance - 1 && distance < allowedDistance) {
+                watch.getWatchStatus().setCode(WatchStatus.AT_BORDER);
+                watch.getWatchStatus().setMessage(mainActivity.getResources().getString(R.string.statusMessage, "At Border", distance, (distance == dist) ? "mts" : "miles"));
+                watch.getWatchStatus().setDescription(
+                        mainActivity.getResources().getString(
+                                R.string.detailedMessage,
+                                distance,
+                                (distance == dist) ? "mts" : "miles",
+                                watch.getTarget().getLatitude(),
+                                watch.getTarget().getLongitude()));
+            } else if (distance > allowedDistance) {
+                watch.getWatchStatus().setCode(WatchStatus.OUT_OF_RANGE);
+                watch.getWatchStatus().setMessage(mainActivity.getResources().getString(R.string.statusMessage, "Out Of Range", distance, (distance == dist) ? "mts" : "miles"));
+                watch.getWatchStatus().setDescription(
+                        mainActivity.getResources().getString(
+                                R.string.detailedMessage,
+                                distance,
+                                (distance == dist) ? "mts" : "miles",
+                                watch.getTarget().getLatitude(),
+                                watch.getTarget().getLongitude()));
 
-        } else {
-            watch.getWatchStatus().setCode(WatchStatus.IN_RANGE);
-            watch.getWatchStatus().setMessage(mainActivity.getResources().getString(R.string.statusMessage, "", distance, (distance == dist) ? "mts" : "miles"));
-            watch.getWatchStatus().setDescription(
-                    mainActivity.getResources().getString(
-                            R.string.detailedMessage,
-                            distance,
-                            (distance == dist) ? "mts" : "miles",
-                            watch.getTarget().getLatitude(),
-                            watch.getTarget().getLongitude()));
+            } else {
+                watch.getWatchStatus().setCode(WatchStatus.IN_RANGE);
+                watch.getWatchStatus().setMessage(mainActivity.getResources().getString(R.string.statusMessage, "", distance, (distance == dist) ? "mts" : "miles"));
+                watch.getWatchStatus().setDescription(
+                        mainActivity.getResources().getString(
+                                R.string.detailedMessage,
+                                distance,
+                                (distance == dist) ? "mts" : "miles",
+                                watch.getTarget().getLatitude(),
+                                watch.getTarget().getLongitude()));
+            }
+            Log.d(LOG_TAG, watch.getTarget().getEmail() + " lat " + watch.getTarget().getLatitude() + " lon " + watch.getTarget().getLongitude());
+            mainActivity.setPointer(watch.getTarget());
         }
-        Log.d(LOG_TAG, watch.getTarget().getEmail() + " lat " + watch.getTarget().getLatitude() + " lon " + watch.getTarget().getLongitude());
-        mainActivity.setPointer(watch.getTarget());
     }
 }

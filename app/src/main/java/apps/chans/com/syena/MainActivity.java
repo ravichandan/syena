@@ -245,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
                 }
-                dataSource.eraseEmailData();
+                //dataSource.eraseEmailData();
                 //recreate();
                 return;
             }

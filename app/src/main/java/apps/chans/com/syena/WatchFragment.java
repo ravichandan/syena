@@ -1,6 +1,7 @@
 package apps.chans.com.syena;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -167,6 +168,8 @@ public class WatchFragment extends Fragment implements SensorEventListener {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(LOG_TAG, "In Item Long click, position: " + position + ", id: " + id);
+                Intent memberProfileActivity = new Intent(WatchFragment.this.getContext(), MemberProfileActivity.class);
+                startActivity(memberProfileActivity);
                 return true;
             }
         });
@@ -367,8 +370,9 @@ public class WatchFragment extends Fragment implements SensorEventListener {
         }
 
         protected void stopLocationUpdates() {
-            LocationServices.FusedLocationApi.removeLocationUpdates(
-                    mGoogleApiClient, this);
+            if (mGoogleApiClient.isConnected())
+                LocationServices.FusedLocationApi.removeLocationUpdates(
+                        mGoogleApiClient, this);
             Log.d(LOG_TAG, "Location update stopped .......................");
         }
     }

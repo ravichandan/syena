@@ -44,7 +44,9 @@
                 android:footerDividersEnabled="true"
                 android:headerDividersEnabled="true"
                 android:longClickable="true"
-                android:groupIndicator="@null"/>
+                android:groupIndicator="@null"
+                android:smoothScrollbar="false"
+                />
         <!--</ScrollView>-->
     </RelativeLayout>
 

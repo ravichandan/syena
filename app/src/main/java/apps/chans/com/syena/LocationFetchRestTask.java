@@ -187,6 +187,7 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
         super.onPostExecute(aVoid);
         Log.d(LOG_TAG, "In postExecute");
         if (count >= retries) {
+
             adapter.updateWatchErrorStatus(watch);
             adapter.notifyDataSetChanged();
         }
