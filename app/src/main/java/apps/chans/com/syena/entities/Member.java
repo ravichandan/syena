@@ -1,5 +1,6 @@
 package apps.chans.com.syena.entities;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,7 +8,7 @@ import java.util.Map;
  * Created by sitir on 25-01-2017.
  */
 
-public class Member {
+public class Member implements Serializable{
 
     private String displayName;
 

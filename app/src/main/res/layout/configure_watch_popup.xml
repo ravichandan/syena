@@ -15,7 +15,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginLeft="20dp"
         android:id="@+id/interval"
-        android:layout_alignTop="@+id/timeSpinner"
+        android:layout_alignTop="@+id/timeIntervalSpinnerTmp"
         android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"/>
 
@@ -24,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/distanceTextView"
-        android:layout_below="@+id/timeSpinner"
+        android:layout_below="@+id/timeIntervalSpinnerTmp"
         android:layout_alignEnd="@+id/interval"
         android:layout_alignRight="@+id/interval"
         android:layout_marginTop="32dp" />
@@ -84,7 +84,7 @@
 
     <Spinner
         android:layout_height="wrap_content"
-        android:id="@+id/timeSpinner"
+        android:id="@+id/timeIntervalSpinnerTmp"
         android:layout_width="66dip"
         android:prompt="@string/choose_time_interval"
         android:spinnerMode="dialog"
@@ -99,14 +99,14 @@
     <Spinner
         android:layout_width="175dip"
         android:layout_height="wrap_content"
-        android:id="@+id/intervalSpinner"
-        android:entries="@array/interval"
+        android:id="@+id/intervalUnitSpinner"
+        android:entries="@array/interval_unit"
         android:prompt="@string/choose_time_interval"
         android:spinnerMode="dialog"
-        android:layout_alignBottom="@+id/timeSpinner"
-        android:layout_toEndOf="@+id/timeSpinner"
-        android:layout_toRightOf="@+id/timeSpinner"
-        android:layout_alignTop="@+id/timeSpinner" />
+        android:layout_alignBottom="@+id/timeIntervalSpinnerTmp"
+        android:layout_toEndOf="@+id/timeIntervalSpinnerTmp"
+        android:layout_toRightOf="@+id/timeIntervalSpinnerTmp"
+        android:layout_alignTop="@+id/timeIntervalSpinnerTmp" />
 
 
 </RelativeLayout>

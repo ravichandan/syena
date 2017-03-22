@@ -28,7 +28,10 @@ import apps.chans.com.syena.web.response.LocationResponse;
  */
 
 public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
+
     public static String LOG_TAG = LocationFetchRestTask.class.getSimpleName();
+
+    public boolean pause = false;
     private String url;
     private WatchExpandableAdapter adapter;
     private Watch watch;
@@ -36,19 +39,16 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
     private int retries = 10, count = 0;
 
     public LocationFetchRestTask(WatchExpandableAdapter adapter, RequestQueue queue, Watch watch, String url) {
-        Log.d(LOG_TAG,"In Constructor");
+        Log.d(LOG_TAG, "In Constructor");
         this.adapter = adapter;
         this.queue = queue;
         this.watch = watch;
         this.url = url;
         if (watch.getViewHolder() != null && watch.getViewHolder().locationFetchRestTask != null) {
-            watch.getViewHolder().locationFetchRestTask.count = retries+10;
+            watch.getViewHolder().locationFetchRestTask.count = retries + 10;
         }
     }
 
-    public void endTask(){
-        count = retries+10;
-    }
     /*
      * Calculate distance between two points in latitude and longitude taking
      * into account height difference. If you are not interested in height
@@ -79,6 +79,10 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
         //return distance;
     }
 
+    public void endTask() {
+        count = retries + 10;
+    }
+
     public void incrementCount() {
         count++;
     }
@@ -93,6 +97,14 @@ public class LocationFetchRestTask extends AsyncTask<Object, Watch, Void> {
         // loop every 'refreshInterval' seconds and get the location updates of target
         while (watch.isActive() && count <= retries) {
             Log.d(LOG_TAG, "Looping in seconds :  " + watch.getWatchConfiguration().getRefreshInterval() * 1000 + ", watch: " + watch);
+            while (pause) {
+                Log.d(LOG_TAG, "Task is paused.. sleeping for 30 seconds");
+                try {
+                    Thread.sleep(30 * 1000);
+                } catch (InterruptedException e) {
+                    Log.d(LOG_TAG, "Error occurred while sleeping the thread", e);
+                }
+            }
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                     new Response.Listener<String>() {
                         @Override

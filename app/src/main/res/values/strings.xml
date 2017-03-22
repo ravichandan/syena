@@ -3,7 +3,7 @@
     <string name="generate_code_text">Enter the displayed text in the device that you want to tag.</string>
     <string name="scan_code_text">Enter the text from the other device to tag.</string>
 
-    <string-array name="interval">
+    <string-array name="interval_unit">
         <item>Sec</item>
     </string-array>
     <string-array name="time_interval">
@@ -33,6 +33,7 @@
     <string name="err_text_member_not_found">You are not registered yet</string>
     <string name="err_text_member_not_active">Your login is not yet activated</string>
     <string name="nick_name_string">Nick name</string>
+    <string name="email_label">Email</string>
 
     <!--params-->
     <string name="hp_Installation_Id">Installation-Id</string>
@@ -40,7 +41,7 @@
     <string name="email_qp">requester</string>
 
     <!--urls-->
-    <string name="server_url">http://103.194.133.225:7979/syena-system</string>
+    <string name="server_url">http://117.201.222.19:7979/syena-system</string>
     <string name="get_or_create_url">/member/get-or-create?requester=%1$s</string>
     <string name="location_update_url">/member/location</string>
     <string name="get_tag_code_url">/member/tag-code?requester=%1$s</string>
@@ -54,6 +55,8 @@
     <string name="pin_verify_url">/member/add?requester=%1$s</string>
     <string name="get_watches_url">/member/get-watches?requester=%1$s</string>
     <string name="update_signature_url">/member/update-signature</string>
+    <string name="watch_details_url">/member/watch-details?requester=%1$s&amp;target=%2$s></string>
+    <string name="delete_watch_url">/member/delete-watch?requester=%1$s&amp;target=%2$s></string>
 
 
 </resources>

@@ -1,9 +1,12 @@
 package apps.chans.com.syena.entities;
 
+import android.os.Parcelable;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import java.io.Serializable;
 
 import apps.chans.com.syena.LocationFetchRestTask;
 import apps.chans.com.syena.R;
@@ -12,7 +15,7 @@ import apps.chans.com.syena.R;
  * Created by sitir on 25-01-2017.
  */
 
-public class Watch implements Comparable<Watch> {
+public class Watch implements Comparable<Watch>,Serializable {
 
     private Member source;
 
@@ -22,9 +25,11 @@ public class Watch implements Comparable<Watch> {
 
     private WatchConfiguration watchConfiguration;
 
-    private WatchStatus watchStatus;
+    private transient WatchStatus watchStatus;
 
-    private ViewHolder viewHolder;
+    private transient ViewHolder viewHolder;
+
+    private String nickName;
 
     public Watch(Member source, Member target) {
         this.source = source;
@@ -91,6 +96,14 @@ public class Watch implements Comparable<Watch> {
         this.watchStatus = watchStatus;
     }
 
+    public String getNickName() {
+        return nickName;
+    }
+
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
+
     @Override
     public int compareTo(Watch o) {
         if (this.active && !o.active)
@@ -121,6 +134,7 @@ public class Watch implements Comparable<Watch> {
         public TextView statusTextView;
         public TextView displayNameTextView;
         public View view;
+        public boolean childViewExpanded;
         public ImageView compassPointer;
         public LocationFetchRestTask locationFetchRestTask;
 

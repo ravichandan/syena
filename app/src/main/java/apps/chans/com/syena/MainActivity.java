@@ -3,6 +3,7 @@ package apps.chans.com.syena;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -137,13 +138,26 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        Log.d(LOG_TAG, "In onStart()");
 
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
+        Log.d(LOG_TAG, "In onResume()");
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(LOG_TAG, "Resuming all active watches");
+                for (Watch w : dataSource.getWatchList()) {
+                    if (!w.isActive()) continue;
+                    if (w.getViewHolder() == null) continue;
+                    if (w.getViewHolder().locationFetchRestTask == null) continue;
+                    w.getViewHolder().locationFetchRestTask.pause = false;
+                }
+            }
+        }, 100);
 
     }
 
@@ -151,14 +165,26 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         // to stop the listener and save battery
-
+        Log.d(LOG_TAG, "In onPause()");
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(LOG_TAG, "Pausing all active watches");
+                for (Watch w : dataSource.getWatchList()) {
+                    if (!w.isActive()) continue;
+                    if (w.getViewHolder() == null) continue;
+                    if (w.getViewHolder().locationFetchRestTask == null) continue;
+                    w.getViewHolder().locationFetchRestTask.pause = true;
+                }
+            }
+        }, 100);
 
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-
+        Log.d(LOG_TAG, "In onStop()");
         queue.stop();
 
     }
@@ -721,6 +747,7 @@ public class MainActivity extends AppCompatActivity {
     public void configureWatch(View view) {
 
         Watch w1 = dataSource.getWatchList().get((Integer) view.getTag());
+        Log.d(LOG_TAG, "Watch config: dist: " + w1.getWatchConfiguration().getSafeDistance() + ", interval: " + w1.getWatchConfiguration().getRefreshInterval());
         if (w1 != null)
             dataSource.selectedMember = w1.getTarget();
 
@@ -753,7 +780,7 @@ public class MainActivity extends AppCompatActivity {
                 popup.dismiss();
             }
         });
-        Spinner timeSpinner = (Spinner) configurePopup.findViewById(R.id.timeSpinner);
+        Spinner timeSpinner = (Spinner) configurePopup.findViewById(R.id.timeIntervalSpinner);
         String items[] = getResources().getStringArray(R.array.time_interval);
         ArrayAdapter adapter1 = new ArrayAdapter(MainActivity.this, R.layout.support_simple_spinner_dropdown_item, items);
         timeSpinner.setAdapter(adapter1);
@@ -770,12 +797,12 @@ public class MainActivity extends AppCompatActivity {
     private void setNewConfiguration(View v) {
 
 
-        Spinner intervalSpinner = (Spinner) v.findViewById(R.id.intervalSpinner);
-        Spinner timeSpinner = (Spinner) v.findViewById(R.id.timeSpinner);
+        Spinner intervalSpinner = (Spinner) v.findViewById(R.id.intervalUnitSpinner);
+        Spinner timeSpinner = (Spinner) v.findViewById(R.id.timeIntervalSpinner);
         timeSpinner.getSelectedItemPosition();
         int intervalFactor = Integer.parseInt(timeSpinner.getSelectedItem().toString());
 
-        // TODO int intervalPos=intervalSpinner.getSelectedItemPosition();
+        // TODO int intervalPos=intervalUnitSpinner.getSelectedItemPosition();
         /*if(intervalPos==1)
             intervalFactor=60*intervalFactor;
         if(intervalPos==2)
@@ -795,7 +822,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void notifyWatchesDataSet() {
-        Log.d(LOG_TAG,"Notifying 'watchesDataSet' ");
+        Log.d(LOG_TAG, "Notifying 'watchesDataSet' ");
         if (watchFragment != null) watchFragment.notifyWatchesDataSet();
     }
 

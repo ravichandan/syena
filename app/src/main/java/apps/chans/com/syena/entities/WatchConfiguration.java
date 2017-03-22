@@ -1,9 +1,11 @@
 package apps.chans.com.syena.entities;
 
+import java.io.Serializable;
+
 /**
  * Created by sitir on 25-01-2017.
  */
-public class WatchConfiguration <K,V>{
+public class WatchConfiguration <K,V>implements Serializable {
 
     private int safeDistance=1;
 

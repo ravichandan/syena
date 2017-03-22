@@ -1,6 +1,8 @@
 package apps.chans.com.syena.datasource;
 
+import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
@@ -125,6 +127,7 @@ public class DataSource {
     private void refreshWatchList() {
         final ObjectMapper mapper = new ObjectMapper();
         String url = mainActivity.getString(R.string.server_url) + mainActivity.getString(R.string.get_watches_url, email);
+        Log.d(LOG_TAG, "Getting watches data from server, url: " + url);
         StringRequest jsonObjectRequest = new StringRequest(
                 Request.Method.GET,
                 url,
@@ -155,9 +158,16 @@ public class DataSource {
                             Member target = new Member(entry.getEmail(), entry.getName());
                             Watch watch = new Watch(currentMember, target);
                             if (currentMember.getWatchMap().get(target) != null) {
-                                watch.setViewHolder(currentMember.getWatchMap().get(target).getViewHolder());
-                                if (currentMember.getWatchMap().get(target).getViewHolder().locationFetchRestTask != null)
-                                    currentMember.getWatchMap().get(target).getViewHolder().locationFetchRestTask.endTask();
+                                Watch tmpWatch = currentMember.getWatchMap().get(target);
+                                watch.getWatchConfiguration().setSafeDistance(tmpWatch.getWatchConfiguration().getSafeDistance());
+                                watch.getWatchConfiguration().setRefreshInterval(tmpWatch.getWatchConfiguration().getRefreshInterval());
+                                //TODO remove the next line after nickname api is written
+                                watch.setNickName(tmpWatch.getNickName());
+                                if (tmpWatch.getViewHolder() != null) {
+                                    watch.setViewHolder(tmpWatch.getViewHolder());
+                                    if (tmpWatch.getViewHolder().locationFetchRestTask != null)
+                                        tmpWatch.getViewHolder().locationFetchRestTask.endTask();
+                                }
                             }
                             watch.setActive(entry.isWatchActive());
                             currentMember.getWatchMap().put(target, watch);
@@ -339,7 +349,7 @@ public class DataSource {
         try {
             jsonReq = new JSONObject(mapper.writeValueAsString(request));
         } catch (IOException | JSONException e) {
-            Log.d(url, getStackTrace(e));
+            Log.d(LOG_TAG, url, e);
             return;
         }
 
@@ -403,13 +413,103 @@ public class DataSource {
     public void makeAllWatchesInactive() {
         for (Watch w : getWatchList()) w.setActive(false);
     }
+
     public void endAllLocationFetchTasks() {
         for (Watch w : getWatchList()) {
-            if(w.getViewHolder()!=null&&w.getViewHolder().locationFetchRestTask!=null){
+            if (w.getViewHolder() != null && w.getViewHolder().locationFetchRestTask != null) {
                 w.getViewHolder().locationFetchRestTask.endTask();
-                w.getViewHolder().locationFetchRestTask=null;
+                w.getViewHolder().locationFetchRestTask = null;
             }
         }
+    }
+
+    public void saveWatch(String targetEmail, Map<String, String> watchDetails) {
+        if (TextUtils.isEmpty(targetEmail) || watchDetails == null) return;
+        Log.d(LOG_TAG, "Persisting watch to database.");
+        final ObjectMapper mapper = new ObjectMapper();
+        JSONObject jsonReq = null;
+
+        try {
+            jsonReq = new JSONObject(mapper.writeValueAsString(watchDetails));
+        } catch (IOException | JSONException e) {
+            Log.d(LOG_TAG, getStackTrace(e));
+            return;
+        } catch (Exception e) {
+            Log.d(LOG_TAG, getStackTrace(e));
+            return;
+        }
+
+        final String url = mainActivity.getString(R.string.server_url) + mainActivity.getString(R.string.watch_details_url, currentMember.getEmail(), targetEmail);
+        Log.d(LOG_TAG, "Sending request to url: " + url);
+        MyJsonRequest jsonRequest = new MyJsonRequest(Request.Method.POST, url, jsonReq, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d(LOG_TAG, url + " Got response from server : " + response);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(LOG_TAG, "ERROR response received from server", error);
+            }
+        }) {
+            @Override
+            protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
+                if (response.statusCode >= 200 && response.statusCode < 300) {
+                    Log.d(LOG_TAG, "Status code is success");
+                    Toast.makeText(mainActivity.getApplicationContext(), "Saved successfully", Toast.LENGTH_SHORT).show();
+                    return Response.success(null, HttpHeaderParser.parseCacheHeaders(response));
+                } else {
+                    Log.d(LOG_TAG, "Status code is not success. Returning error response " + response.statusCode);
+                    Toast.makeText(mainActivity.getApplicationContext(), "Saving failed. Error code: " + response.statusCode, Toast.LENGTH_SHORT).show();
+                    return Response.error(new VolleyError(response));
+                }
+            }
+        };
+
+        MainActivity.queue.add(jsonRequest);
+        MainActivity.queue.start();
+
+    }
+
+    public void deleteWatch(final String targetEmail) {
+
+        if (TextUtils.isEmpty(targetEmail) ) return;
+        Log.d(LOG_TAG, "Sending request to remove watch for "+targetEmail);
+
+        final String url = mainActivity.getString(R.string.server_url) + mainActivity.getString(R.string.delete_watch_url, currentMember.getEmail(), targetEmail);
+        Log.d(LOG_TAG, "Sending request to url: " + url);
+        MyJsonRequest jsonRequest = new MyJsonRequest(Request.Method.DELETE, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d(LOG_TAG, url + " Got response from server : " + response);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(LOG_TAG, "ERROR response received from server", error);
+            }
+        }) {
+            @Override
+            protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
+                if (response.statusCode >= 200 && response.statusCode < 300) {
+                    Log.d(LOG_TAG, "Status code is success");
+                    Toast.makeText(mainActivity.getApplicationContext(), "Deleted successfully", Toast.LENGTH_SHORT).show();
+                    Log.d(LOG_TAG, "Deleting watch for "+targetEmail);
+                    selectedMember.getWatchMap().remove(targetEmail);
+                    watchList.remove(targetEmail);
+                    memberList.remove(targetEmail);
+                    return Response.success(null, HttpHeaderParser.parseCacheHeaders(response));
+                } else {
+                    Log.d(LOG_TAG, "Status code is not success. Returning error response " + response.statusCode);
+                    Toast.makeText(mainActivity.getApplicationContext(), "Deleting failed. Error code: " + response.statusCode, Toast.LENGTH_SHORT).show();
+                    return Response.error(new VolleyError(response));
+                }
+            }
+        };
+
+        MainActivity.queue.add(jsonRequest);
+        MainActivity.queue.start();
+
     }
 
     private class MyJsonRequest extends JsonObjectRequest {

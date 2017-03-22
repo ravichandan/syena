@@ -24,11 +24,8 @@
             android:launchMode="singleTop" />
         <activity
             android:name=".MemberProfileActivity"
-            android:launchMode="singleTop"
-            android:parentActivityName=".MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+            >
+
         </activity>
         <activity
             android:name=".WatchersActivity"

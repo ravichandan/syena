@@ -133,13 +133,15 @@ public class WatchExpandableAdapter extends BaseExpandableListAdapter {
         if (watch.getViewHolder() != null && watch.getViewHolder().locationFetchRestTask == null)
             doRestTaskFormalities(startSwitch, watch.isActive());
         TextView displayNameText = watch.getViewHolder().displayNameTextView;
-        if (!StringUtils.isBlank(watch.getTarget().getDisplayName()))
+        if (!StringUtils.isBlank(watch.getNickName()))
+            displayNameText.setText(watch.getNickName());
+        else if (!StringUtils.isBlank(watch.getTarget().getDisplayName()))
             displayNameText.setText(watch.getTarget().getDisplayName());
         else displayNameText.setText(watch.getTarget().getEmail());
 
         TextView smallStatusText = watch.getViewHolder().statusTextView;
         smallStatusText.setText(watch.getWatchStatus().getMessage());
-
+        watch.getViewHolder().childViewExpanded =isExpanded;
         return convertView;
     }
 

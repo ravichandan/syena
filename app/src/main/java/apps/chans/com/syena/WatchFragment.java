@@ -34,6 +34,7 @@ import com.google.android.gms.location.LocationServices;
 
 import apps.chans.com.syena.datasource.DataSource;
 import apps.chans.com.syena.entities.Member;
+import apps.chans.com.syena.entities.Watch;
 import apps.chans.com.syena.view.WatchExpandableAdapter;
 
 /**
@@ -67,7 +68,7 @@ public class WatchFragment extends Fragment implements SensorEventListener {
         sensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
+        dataSource = DataSource.instance;
     }
 
     @Override
@@ -85,6 +86,18 @@ public class WatchFragment extends Fragment implements SensorEventListener {
         super.onPause();
         sensorManager.unregisterListener(this);
         if (locationHandler != null) locationHandler.stopLocationUpdates();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(LOG_TAG, "Pausing all active watches");
+                for (Watch w : dataSource.getWatchList()) {
+                    if (!w.isActive()) continue;
+                    if (w.getViewHolder() == null) continue;
+                    if (w.getViewHolder().locationFetchRestTask == null) continue;
+                    w.getViewHolder().locationFetchRestTask.pause = true;
+                }
+            }
+        }, 100);
     }
 
     @Override
@@ -127,11 +140,24 @@ public class WatchFragment extends Fragment implements SensorEventListener {
             locationHandler.startLocationUpdates();
             Log.d(LOG_TAG, "Location update resumed .....................");
         }
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(LOG_TAG, "Resuming all active watches");
+                for (Watch w : dataSource.getWatchList()) {
+                    if (!w.isActive()) continue;
+                    if (w.getViewHolder() == null) continue;
+                    if (w.getViewHolder().locationFetchRestTask == null) continue;
+                    w.getViewHolder().locationFetchRestTask.pause = false;
+                }
+            }
+        }, 100);
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        if (dataSource == null) dataSource = DataSource.instance;
         Log.d(LOG_TAG, "In onCreateView, inflating layout");
         View baseView = inflater.inflate(R.layout.watch_container, container, false);
         Log.d(LOG_TAG, "Successfully inflated layout");
@@ -169,6 +195,7 @@ public class WatchFragment extends Fragment implements SensorEventListener {
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(LOG_TAG, "In Item Long click, position: " + position + ", id: " + id);
                 Intent memberProfileActivity = new Intent(WatchFragment.this.getContext(), MemberProfileActivity.class);
+                memberProfileActivity.putExtra("PROFILE_WATCH_POSITION", position);
                 startActivity(memberProfileActivity);
                 return true;
             }
@@ -240,13 +267,14 @@ public class WatchFragment extends Fragment implements SensorEventListener {
     }
 
     public void setPointer(Member target) {
-        if (!dataSource.currentMember.getWatchMap().get(target).isActive())
+        Watch currentWatch = dataSource.currentMember.getWatchMap().get(target);
+        if (!currentWatch.isActive() || !currentWatch.getViewHolder().childViewExpanded)
             return;
         double lat1 = dataSource.currentMember.getLatitude();
         double lat2 = target.getLatitude();
         double lon1 = dataSource.currentMember.getLongitude();
         double lon2 = target.getLongitude();
-        //Log.d(LOG_TAG, "In setPointer" + target.getEmail() + " " + lat1 + " " + lon1 + " " + lat2 + " " + lon2);
+        Log.d(LOG_TAG, "In setPointer" + target.getEmail() + " " + lat1 + " " + lon1 + " " + lat2 + " " + lon2);
         double dLon = (lon2 - lon1);
 
         double y = Math.sin(dLon) * Math.cos(lat2);
@@ -262,7 +290,7 @@ public class WatchFragment extends Fragment implements SensorEventListener {
         float degree = (float) brng - (dataSource.currentMember.getDegree() * (float) (180.0f / Math.PI));//-(float) brng ;
 
         if (degree > 360) degree = degree - 360;
-        //Log.d(LOG_TAG,"degree "+degree+" device degree: "+Math.toDegrees(dataSource.currentMember.getDegree())+" rand calc"+(dataSource.currentMember.getDegree() * (float) (180.0f / Math.PI)));
+        Log.d(LOG_TAG, "degree " + degree + " device degree: " + Math.toDegrees(dataSource.currentMember.getDegree()) + " rand calc" + (dataSource.currentMember.getDegree() * (float) (180.0f / Math.PI)));
 
         // create a rotation animation (reverse turn degree degrees)
         RotateAnimation ra = new RotateAnimation(
@@ -273,18 +301,18 @@ public class WatchFragment extends Fragment implements SensorEventListener {
                 0.5f);
 
         // how long the animation will take place
-        ra.setDuration(0);
+        ra.setDuration(99);
 
         // set the animation after the end of the reservation status
         ra.setFillAfter(true);
 
         // Start the animation
-        if (dataSource.currentMember.getWatchMap().get(target) != null
-                && dataSource.currentMember.getWatchMap().get(target).getViewHolder() != null
-                && dataSource.currentMember.getWatchMap().get(target).getViewHolder().compassPointer != null) {
+        if (currentWatch != null
+                && currentWatch.getViewHolder() != null
+                && currentWatch.getViewHolder().compassPointer != null) {
             //dataSource.currentMember.getWatchMap().get(target).getViewHolder().compassPointer.startAnimation(ra);
             //Log.d(LOG_TAG, target.getEmail() + " Rotating image by degree: " + degree);
-            dataSource.currentMember.getWatchMap().get(target).getViewHolder().compassPointer.setRotation(degree);
+            currentWatch.getViewHolder().compassPointer.setRotation(degree);
         }
         //dataSource.currentMember.setDegree(-degree);
     }
