@@ -3,15 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/profileMenu"
+        android:icon="@drawable/profile_pic_placeholder"
+        android:title="Profile"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:title="Profile"></item>
+
+    <item
         android:id="@+id/tagMemberMenu"
-        android:icon="@drawable/plus_sign_4"
+        android:icon="@drawable/plus_32"
         android:title="Tag a friend"
         app:showAsAction="ifRoom|collapseActionView"
         app:title="Tag a friend"></item>
 
     <item
         android:id="@+id/logout"
-        android:icon="@drawable/logout"
+        android:icon="@drawable/logout_32"
         android:title="Logout"
         app:showAsAction="ifRoom|collapseActionView"
         app:title="Logout"></item>

@@ -97,9 +97,8 @@ public class MainActivity extends AppCompatActivity {
                 sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
                 SensorManager.SENSOR_DELAY_NORMAL);
         Log.d(LOG_TAG, "1111results of listener registers: " + accel + magnet + gyro);*/
-
         queue = Volley.newRequestQueue(this);
-        queue.start();
+        //queue.start();
 
         Log.d(LOG_TAG, "Starting MainActivity, dataSource: " + dataSource);
 
@@ -132,13 +131,13 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         }
-
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         Log.d(LOG_TAG, "In onStart()");
+
 
     }
 
@@ -158,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }, 100);
-
+        //queue.start();
     }
 
     @Override
@@ -178,14 +177,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }, 100);
-
+        //queue.stop();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         Log.d(LOG_TAG, "In onStop()");
-        queue.stop();
+        //queue.stop();
 
     }
 
@@ -291,7 +290,8 @@ public class MainActivity extends AppCompatActivity {
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         queue.add(jsonObjectRequest);
-        queue.start();
+
+        //queue.start();
     }
 
     private void showLoginPopup() {
@@ -424,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
                         DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                         DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
                 queue.add(jsonObjectRequest);
-                queue.start();
+                //queue.start();
                 //JSONObject response = future.get(60, TimeUnit.SECONDS);
 
             }
@@ -600,7 +600,7 @@ public class MainActivity extends AppCompatActivity {
                         DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                         DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
                 queue.add(jsonObjectRequest);
-                queue.start();
+                //queue.start();
             }
         });
 
@@ -711,6 +711,11 @@ public class MainActivity extends AppCompatActivity {
             ///    startActivity(intent);
             //   result = true;
             //     break;
+            case R.id.profileMenu:
+                Intent profileIntent = new Intent(this, ProfileActivity.class);
+                startActivityForResult(profileIntent, TAG_MEMBER_RESULT);
+                result = true;
+                break;
             case R.id.tagMemberMenu:
                 Intent tagMemberIntent = new Intent(this, TagMemberActivity.class);
                 startActivityForResult(tagMemberIntent, TAG_MEMBER_RESULT);

@@ -28,10 +28,10 @@
                 android:scaleType="centerCrop"
                 android:src="@drawable/small_size_one"
                 app:layout_collapseMode="parallax"
-                android:id="@+id/memberProfilePictureIV" />
+                android:id="@+id/friendProfilePictureIV" />
 
             <android.support.v7.widget.Toolbar
-                android:id="@+id/memberProfileToolbar"
+                android:id="@+id/friendProfileToolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:fitsSystemWindows="true"
@@ -50,28 +50,28 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <RelativeLayout
-            android:id="@+id/parentRL"
+            android:id="@+id/friend_profile_layout_parentRL"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
             <RelativeLayout
-                android:id="@+id/profileDetailsRL"
+                android:id="@+id/friendProfileDetailsRL"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginBottom="10sp"
                 android:layout_marginTop="20sp">
 
                 <TextView
-                    android:id="@+id/emailLabelTV"
+                    android:id="@+id/friendEmailLabelTV"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignBaseline="@+id/emailValueTV"
-                    android:layout_alignBottom="@+id/emailValueTV"
+                    android:layout_alignBaseline="@+id/friendEmailValueTV"
+                    android:layout_alignBottom="@+id/friendEmailValueTV"
                     android:layout_alignParentStart="true"
                     android:layout_marginStart="31dp"
                     android:text="@string/email_label" />
 
                 <TextView
-                    android:id="@+id/emailValueTV"
+                    android:id="@+id/friendEmailValueTV"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentTop="true"
@@ -84,7 +84,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginBottom="10sp"
                 android:layout_marginTop="20sp"
-                android:layout_below="@+id/profileDetailsRL">
+                android:layout_below="@+id/friendProfileDetailsRL">
 
                 <TextView
                     android:id="@+id/nickNameTV"

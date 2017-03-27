@@ -41,7 +41,7 @@
     <string name="email_qp">requester</string>
 
     <!--urls-->
-    <string name="server_url">http://117.201.222.19:7979/syena-system</string>
+    <string name="server_url">http://117.201.218.219:7979/syena-system</string>
     <string name="get_or_create_url">/member/get-or-create?requester=%1$s</string>
     <string name="location_update_url">/member/location</string>
     <string name="get_tag_code_url">/member/tag-code?requester=%1$s</string>
@@ -55,8 +55,9 @@
     <string name="pin_verify_url">/member/add?requester=%1$s</string>
     <string name="get_watches_url">/member/get-watches?requester=%1$s</string>
     <string name="update_signature_url">/member/update-signature</string>
-    <string name="watch_details_url">/member/watch-details?requester=%1$s&amp;target=%2$s></string>
-    <string name="delete_watch_url">/member/delete-watch?requester=%1$s&amp;target=%2$s></string>
+    <string name="watch_details_url">/member/watch-details?requester=%1$s&amp;target=%2$s</string>
+    <string name="delete_watch_url">/member/delete-watch?requester=%1$s&amp;target=%2$s</string>
+    <string name="upload_pic_url">/member/upload-pic?requester=%1$s</string>
 
 
 </resources>

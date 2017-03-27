@@ -194,7 +194,7 @@ public class WatchFragment extends Fragment implements SensorEventListener {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(LOG_TAG, "In Item Long click, position: " + position + ", id: " + id);
-                Intent memberProfileActivity = new Intent(WatchFragment.this.getContext(), MemberProfileActivity.class);
+                Intent memberProfileActivity = new Intent(WatchFragment.this.getContext(), FriendProfileActivity.class);
                 memberProfileActivity.putExtra("PROFILE_WATCH_POSITION", position);
                 startActivity(memberProfileActivity);
                 return true;

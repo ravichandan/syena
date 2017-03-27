@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+<item
+        android:id="@+id/profile_save"
+        android:icon="@drawable/check_box_png_32"
+        android:title="Save"
+        app:title="Save"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+</menu>

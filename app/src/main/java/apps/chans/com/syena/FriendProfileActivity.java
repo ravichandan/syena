@@ -24,7 +24,7 @@ import apps.chans.com.syena.entities.Watch;
  * Created by sitir on 20-03-2017.
  */
 
-public class MemberProfileActivity extends AppCompatActivity {
+public class FriendProfileActivity extends AppCompatActivity {
 
     private final String LOG_TAG = getClass().getSimpleName();
     private Watch selectedWatch;
@@ -41,10 +41,10 @@ public class MemberProfileActivity extends AppCompatActivity {
         selectedWatch = dataSource.getWatchList().get(position);
 
         Log.d(LOG_TAG, "setting activity's contentView");
-        setContentView(R.layout.member_profile);
+        setContentView(R.layout.friend_profile_layout);
 
         Log.d(LOG_TAG, "Setting support action bar");
-        Toolbar toolbar = (Toolbar) findViewById(R.id.memberProfileToolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.friendProfileToolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -56,18 +56,18 @@ public class MemberProfileActivity extends AppCompatActivity {
         EditText safeDistanceText = (EditText) findViewById(R.id.safeDistanceEditText);
         safeDistanceText.setText(String.valueOf(selectedWatch.getWatchConfiguration().getSafeDistance()));
         if (!TextUtils.isEmpty(selectedWatch.getNickName())) {
-            EditText nickNameET = (EditText) MemberProfileActivity.this.findViewById(R.id.nickNameET);
+            EditText nickNameET = (EditText) FriendProfileActivity.this.findViewById(R.id.nickNameET);
             nickNameET.setText(selectedWatch.getNickName());
         }
 
-        TextView emailValueTV = (TextView) findViewById(R.id.emailValueTV);
+        TextView emailValueTV = (TextView) findViewById(R.id.friendEmailValueTV);
         emailValueTV.setText(selectedWatch.getTarget().getEmail());
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.d(LOG_TAG, "Inflating options menu");
-        getMenuInflater().inflate(R.menu.member_profile_toolbar_menu, menu);
+        getMenuInflater().inflate(R.menu.friend_profile_toolbar_menu, menu);
         return true;
     }
 
@@ -84,14 +84,14 @@ public class MemberProfileActivity extends AppCompatActivity {
                                               public void run() {
                                                   boolean dataChanged = false;
                                                   Map<String, String> watchDetails = new HashMap<String, String>();
-                                                  Spinner timeIntervalSpinner = (Spinner) MemberProfileActivity.this.findViewById(R.id.timeIntervalSpinner);
+                                                  Spinner timeIntervalSpinner = (Spinner) FriendProfileActivity.this.findViewById(R.id.timeIntervalSpinner);
                                                   Integer timeInterval = Integer.parseInt(timeIntervalSpinner.getSelectedItem().toString());
                                                   if (selectedWatch.getWatchConfiguration().getRefreshInterval() != timeInterval) {
                                                       dataChanged = true;
                                                       selectedWatch.getWatchConfiguration().setRefreshInterval(timeInterval);
                                                       watchDetails.put("refreshInterval", timeInterval.toString());
                                                   }
-                                                  EditText safeDistanceText = (EditText) MemberProfileActivity.this.findViewById(R.id.safeDistanceEditText);
+                                                  EditText safeDistanceText = (EditText) FriendProfileActivity.this.findViewById(R.id.safeDistanceEditText);
                                                   if (!TextUtils.isEmpty(safeDistanceText.getText())) {
                                                       int safeDistance = Integer.parseInt(safeDistanceText.getText().toString());
                                                       if (selectedWatch.getWatchConfiguration().getSafeDistance() != safeDistance) {
@@ -100,7 +100,7 @@ public class MemberProfileActivity extends AppCompatActivity {
                                                           watchDetails.put("safeDistance", String.valueOf(safeDistance));
                                                       }
                                                   }
-                                                  EditText nickNameET = (EditText) MemberProfileActivity.this.findViewById(R.id.nickNameET);
+                                                  EditText nickNameET = (EditText) FriendProfileActivity.this.findViewById(R.id.nickNameET);
                                                   if (!TextUtils.isEmpty(nickNameET.getText())) {
                                                       if (TextUtils.isEmpty(selectedWatch.getNickName()) || !selectedWatch.getNickName().equals(nickNameET.getText().toString()))
                                                           selectedWatch.setNickName(nickNameET.getText().toString());

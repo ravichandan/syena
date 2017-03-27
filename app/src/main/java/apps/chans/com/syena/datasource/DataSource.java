@@ -206,7 +206,7 @@ public class DataSource {
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         MainActivity.queue.add(jsonObjectRequest);
-        MainActivity.queue.start();
+        //MainActivity.queue.start();
 
     }
 
@@ -372,7 +372,7 @@ public class DataSource {
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         MainActivity.queue.add(jsonObjectRequest);
-        MainActivity.queue.start();
+        //MainActivity.queue.start();
     }
 
     public void sendStringRequest(int method, final String url, Response.Listener<String> responseListener, Response.ErrorListener errorListener) {
@@ -395,7 +395,7 @@ public class DataSource {
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         Log.d(LOG_TAG, "Sending request to : " + jsonObjectRequest.getUrl());
         MainActivity.queue.add(jsonObjectRequest);
-        MainActivity.queue.start();
+        // MainActivity.queue.start();
     }
 
     public void addToWatch(String targetEmail) {
@@ -430,7 +430,9 @@ public class DataSource {
         JSONObject jsonReq = null;
 
         try {
-            jsonReq = new JSONObject(mapper.writeValueAsString(watchDetails));
+            String watchDetailsStr = mapper.writeValueAsString(watchDetails);
+            Log.d(LOG_TAG, "Watch Details String: " + watchDetailsStr);
+            jsonReq = new JSONObject(watchDetailsStr);
         } catch (IOException | JSONException e) {
             Log.d(LOG_TAG, getStackTrace(e));
             return;
@@ -467,14 +469,14 @@ public class DataSource {
         };
 
         MainActivity.queue.add(jsonRequest);
-        MainActivity.queue.start();
+        //MainActivity.queue.start();
 
     }
 
     public void deleteWatch(final String targetEmail) {
 
-        if (TextUtils.isEmpty(targetEmail) ) return;
-        Log.d(LOG_TAG, "Sending request to remove watch for "+targetEmail);
+        if (TextUtils.isEmpty(targetEmail)) return;
+        Log.d(LOG_TAG, "Sending request to remove watch for " + targetEmail);
 
         final String url = mainActivity.getString(R.string.server_url) + mainActivity.getString(R.string.delete_watch_url, currentMember.getEmail(), targetEmail);
         Log.d(LOG_TAG, "Sending request to url: " + url);
@@ -494,7 +496,7 @@ public class DataSource {
                 if (response.statusCode >= 200 && response.statusCode < 300) {
                     Log.d(LOG_TAG, "Status code is success");
                     Toast.makeText(mainActivity.getApplicationContext(), "Deleted successfully", Toast.LENGTH_SHORT).show();
-                    Log.d(LOG_TAG, "Deleting watch for "+targetEmail);
+                    Log.d(LOG_TAG, "Deleting watch for " + targetEmail);
                     selectedMember.getWatchMap().remove(targetEmail);
                     watchList.remove(targetEmail);
                     memberList.remove(targetEmail);
@@ -508,7 +510,7 @@ public class DataSource {
         };
 
         MainActivity.queue.add(jsonRequest);
-        MainActivity.queue.start();
+        // MainActivity.queue.start();
 
     }
 
