@@ -3,6 +3,8 @@ package apps.chans.com.syena;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -11,8 +13,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,6 +52,17 @@ public class FriendProfileActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.friendProfileToolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        CollapsingToolbarLayout ctl = (CollapsingToolbarLayout) findViewById(R.id.friendProfileCollapsingToolbar);
+        if (StringUtils.isBlank(selectedWatch.getNickName()))
+            ctl.setTitle(selectedWatch.getTarget().getDisplayName());
+        else
+            ctl.setTitle(selectedWatch.getNickName());
+        ImageView imageView = (ImageView) findViewById(R.id.friendProfilePictureIV);
+        if (selectedWatch.getTarget().getProfilePic() != null) {
+            imageView.setImageBitmap(selectedWatch.getTarget().getProfilePic());
+        } else {
+            dataSource.loadProfilePicIcon(this, selectedWatch.getTarget(), imageView, false);
+        }
 
         Spinner timeIntervalSpinner = (Spinner) findViewById(R.id.timeIntervalSpinner);
         String[] timeIntervalVals = getResources().getStringArray(R.array.time_interval);
@@ -58,6 +74,7 @@ public class FriendProfileActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(selectedWatch.getNickName())) {
             EditText nickNameET = (EditText) FriendProfileActivity.this.findViewById(R.id.nickNameET);
             nickNameET.setText(selectedWatch.getNickName());
+            nickNameET.setText("DFFDD");
         }
 
         TextView emailValueTV = (TextView) findViewById(R.id.friendEmailValueTV);
@@ -77,6 +94,10 @@ public class FriendProfileActivity extends AppCompatActivity {
         boolean result = false;
 
         switch (item.getItemId()) {
+            case android.R.id.home:
+                Log.d(LOG_TAG, "Home button clicked. Going to previous activity");
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
             case R.id.tick_mark_item:
                 Log.d(LOG_TAG, "Selected save member details option");
                 new Handler().postDelayed(new Runnable() {

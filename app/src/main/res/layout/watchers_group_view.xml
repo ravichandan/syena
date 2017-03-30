@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <Switch
@@ -13,26 +14,44 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true" />
 
+    <RelativeLayout
+        android:id="@+id/watcher_profile_pic_RL"
+        android:layout_width="96px"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/watcher_profile_pic_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:layout_centerInParent="false"
         android:layout_alignWithParentIfMissing="false"
         android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_toStartOf="@+id/watcher_enabled_switch">
+        android:layout_toEndOf="@+id/watcher_profile_pic_RL"
+        android:layout_toRightOf="@+id/watcher_profile_pic_RL">
+
         <TextView
             android:text="TextView"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/tv_watchers_group_display"
-            android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:maxLines="1"
+            android:layout_alignParentStart="true"
+            />
+
         <TextView
-            android:text="sitiraju.ramachandraraofgjgkgddkjfkjhgllhkhhlkhlhlkjhlkjhkalyani@gmail.com"
-            android:layout_width="match_parent"
+
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/tv_watchers_group_desc" />
+            android:id="@+id/tv_watchers_group_desc"
+            android:maxLines="1"
+            android:layout_alignParentStart="true"
+            />
 
     </LinearLayout>
 </RelativeLayout>

@@ -2,16 +2,14 @@ package apps.chans.com.syena;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
@@ -25,12 +23,15 @@ import android.widget.Toast;
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ import apps.chans.com.syena.datasource.DataSource;
  * Created by sitir on 25-03-2017.
  */
 
-public class ProfileActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ProfileActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = ProfileActivity.class.getSimpleName();
     private int IMAGE_SELECTION_RESULT = 1;
@@ -48,6 +49,7 @@ public class ProfileActivity extends AppCompatActivity implements LoaderManager.
     private Uri imageUri;
     private DataSource dataSource;
     private Bitmap imageBitmap;
+    private RequestQueue queue;
 
     public Bitmap scaleDown(Bitmap realImage, float maxSize,
                             boolean filter) {
@@ -68,12 +70,21 @@ public class ProfileActivity extends AppCompatActivity implements LoaderManager.
         Log.d(LOG_TAG, "In onCreate");
         super.onCreate(savedInstanceState);
         this.dataSource = DataSource.instance;
+        queue = Volley.newRequestQueue(this);
         Log.d(LOG_TAG, "Seting profile_layout");
         setContentView(R.layout.profile_layout);
         Toolbar toolbar = (Toolbar) findViewById(R.id.profileToolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (dataSource.currentMember.getProfilePic() != null) {
+            ImageView profilePictureIV = (ImageView) findViewById(R.id.profilePictureIV);
+            profilePictureIV.setImageBitmap(dataSource.currentMember.getProfilePic());
+        }
         ImageView uploadProfilePictureIV = (ImageView) findViewById(R.id.uploadProfilePictureIV);
+
+        CollapsingToolbarLayout ctl = (CollapsingToolbarLayout) findViewById(R.id.profileCollapsingToolbar);
+        ctl.setTitle(dataSource.currentMember.getDisplayName());
+
         Log.d(LOG_TAG, "Setting onClickListener for uploadProfilePictureIV");
         uploadProfilePictureIV.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -93,9 +104,25 @@ public class ProfileActivity extends AppCompatActivity implements LoaderManager.
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d(LOG_TAG, "In onActivityResult");
         if (requestCode == IMAGE_SELECTION_RESULT && resultCode == Activity.RESULT_OK) {
+            if (data == null || data.getData() == null) {
+                Log.d(LOG_TAG, "No image selected");
+                return;
+            }
             Log.d(LOG_TAG, "Got success result for image selection");
             imageUri = data.getData();
-            getSupportLoaderManager().initLoader(1, null, this);
+
+            try {
+                imageBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                dataSource.currentMember.setProfilePic(imageBitmap);
+            } catch (IOException e) {
+                Log.d(LOG_TAG, "Exception occurred while getting bitmap for selected image", e);
+                Toast.makeText(this, "Couldn't select image. Please try again", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            imagePath = imageUri.getPath();
+
+            uploadImage(imagePath);
+            //getSupportLoaderManager().initLoader(1, null, this);
 
         }
     }
@@ -114,44 +141,23 @@ public class ProfileActivity extends AppCompatActivity implements LoaderManager.
         boolean result = false;
         Log.d(LOG_TAG, "In onOptionsItemSelected()");
         switch (item.getItemId()) {
-
+            case android.R.id.home:
+                Log.d(LOG_TAG, "Home button clicked. Going to previous activity");
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
             case R.id.profile_save:
-                Log.d(LOG_TAG, "profile_save option has been selected");
-                result = true;
-                break;
+                Log.d(LOG_TAG, "profile_save option has been selected");//// TODO: 27-03-2017 to save profile 
+                finish();
         }
 
-        return false;
+        return result;
     }
 
-    @Override
-    public Loader onCreateLoader(int id, Bundle args) {
-        Log.d(LOG_TAG, "In onCreateLoader(), imageUri: " + imageUri);
-        String[] projection = {MediaStore.Images.Media.DATA};
-        CursorLoader cursorLoader = new CursorLoader(this, imageUri, projection, null, null, null);
-        Log.d(LOG_TAG, "Returning cursorLoader");
-        return cursorLoader;
-    }
-
-    @Override
-    public void onLoadFinished(Loader loader, Cursor data) {
-        Log.d(LOG_TAG, "In onLoadFinished");
-        if (data != null) {
-            Log.d(LOG_TAG, "Cursor is not null");
-            int columnIndex = data.getColumnIndex(MediaStore.Images.Media.DATA);
-            data.moveToFirst();
-            imagePath = data.getString(columnIndex);
-        } else {
-            imagePath = imageUri.getPath();
-        }
-        Log.d(LOG_TAG, "Image path: " + imagePath);
-        uploadImage(imagePath);
-    }
 
     private void uploadImage(String imagePath) {
         Log.d(LOG_TAG, "Uploading image.., imagePath: " + imagePath);
         String url = getString(R.string.server_url) + getString(R.string.upload_pic_url, dataSource.getEmail());
-        imageBitmap = BitmapFactory.decodeFile(imagePath);
+        //imageBitmap = BitmapFactory.decodeFile(imagePath);
         imageBitmap = scaleDown(imageBitmap, 640f, true);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos); //bm is the bitmap object
@@ -191,7 +197,16 @@ public class ProfileActivity extends AppCompatActivity implements LoaderManager.
                 if (response.statusCode >= 200 && response.statusCode < 300) {
                     Log.d(LOG_TAG, "Status code is success");
                     Toast.makeText(ProfileActivity.this.getApplicationContext(), "Saved successfully", Toast.LENGTH_SHORT).show();
-                    ProfileActivity.this.updateProfilePic();
+
+                    dataSource.profilePicToolbarIcon = scaleDown(imageBitmap, DataSource.toolBarIconSize, true);
+                    if (dataSource.profilePicToolbarMenu != null) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                dataSource.profilePicToolbarMenu.setIcon(new BitmapDrawable(getResources(), dataSource.profilePicToolbarIcon));
+                            }
+                        });
+                    }
                     return Response.success(null, HttpHeaderParser.parseCacheHeaders(response));
                 } else {
                     Log.d(LOG_TAG, "Status code is not success. Returning error response " + response.statusCode);
@@ -200,22 +215,24 @@ public class ProfileActivity extends AppCompatActivity implements LoaderManager.
                 }
             }
         };
-        MainActivity.queue.add(request);
-        MainActivity.queue.start();
+        queue.add(request);
+        updateProfilePic();
+        //queue.start();
 
     }
 
-
-    @Override
-    public void onLoaderReset(Loader loader) {
-        Log.d(LOG_TAG, "In onLoaderReset()");
-    }
 
     private void updateProfilePic() {
         Log.d(LOG_TAG, "Updating profile picture with the new selected one");
-        ImageView profilePictureIV = (ImageView) findViewById(R.id.profilePictureIV);
-        profilePictureIV.setImageBitmap(imageBitmap);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ImageView profilePictureIV = (ImageView) findViewById(R.id.profilePictureIV);
+                profilePictureIV.setImageBitmap(imageBitmap);
+            }
+        });
+
         Log.d(LOG_TAG, "Updated profile picture");
-        finish();
+        //finish();
     }
 }

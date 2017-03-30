@@ -92,9 +92,9 @@ public class WatchersFragment extends Fragment {
                 try {
                     GetWatchersResponse getWatchersResponse = mapper.readValue(response.toString(), GetWatchersResponse.class);
                     if (getWatchersResponse != null) {
+                        DataSource.instance.setWatchersResponse(getWatchersResponse);
                         ExpandableListView expandableListView = (ExpandableListView) baseView.findViewById(R.id.watchers_expandable_list_view);
-
-                        WatchersExpandableListAdapter wAdapter = new WatchersExpandableListAdapter(WatchersFragment.this, R.layout.watchers_group_view, R.layout.watchers_list_view, getWatchersResponse);
+                        WatchersExpandableListAdapter wAdapter = new WatchersExpandableListAdapter(WatchersFragment.this, R.layout.watchers_group_view, R.layout.watchers_list_view);
                         expandableListView.setAdapter(wAdapter);
                     }
 

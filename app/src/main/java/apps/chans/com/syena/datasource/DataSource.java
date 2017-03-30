@@ -1,7 +1,14 @@
 package apps.chans.com.syena.datasource;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
+import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -11,8 +18,10 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
+import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -49,13 +58,13 @@ import apps.chans.com.syena.web.response.GetWatchesResponse;
 public class DataSource {
     public static DataSource instance;
     public static List<Member> memberList = new ArrayList<Member>();
-    //public static double latitude = 0.0;
-    //public static double longitude = 0.0;
-    public static double altitude = 0.0;
     public static int requestTimeOut = 600000;
+    public static float toolBarIconSize = 80f;
     public Member currentMember;
     public Member selectedMember;
     public List<Watch> watchList = new ArrayList<Watch>();
+    public Bitmap profilePicToolbarIcon;
+    public MenuItem profilePicToolbarMenu;
     private String LOG_TAG = getClass().getSimpleName();
     private MainActivity mainActivity;
     private String email;
@@ -237,11 +246,11 @@ public class DataSource {
         return getWatchList(false);
     }
 
-    public GetWatchersResponse getWatchers() {
+    public GetWatchersResponse getWatchersResponse() {
         return watchers;
     }
 
-    public void setWatchers(GetWatchersResponse watchers) {
+    public void setWatchersResponse(GetWatchersResponse watchers) {
         this.watchers = watchers;
     }
 
@@ -342,7 +351,7 @@ public class DataSource {
 
     }
 
-    public void sendJsonRequest(int method, final String url, Object request, Response.Listener<JSONObject> responseListener, Response.ErrorListener errorListener) {
+    public JsonObjectRequest createJsonRequest(int method, final String url, Object request, Response.Listener<JSONObject> responseListener, Response.ErrorListener errorListener) {
         final ObjectMapper mapper = new ObjectMapper();
         JSONObject jsonReq = null;
 
@@ -350,7 +359,7 @@ public class DataSource {
             jsonReq = new JSONObject(mapper.writeValueAsString(request));
         } catch (IOException | JSONException e) {
             Log.d(LOG_TAG, url, e);
-            return;
+            return null;
         }
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
@@ -371,11 +380,12 @@ public class DataSource {
                 requestTimeOut,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        MainActivity.queue.add(jsonObjectRequest);
+        //MainActivity.queue.add(jsonObjectRequest);
         //MainActivity.queue.start();
+        return jsonObjectRequest;
     }
 
-    public void sendStringRequest(int method, final String url, Response.Listener<String> responseListener, Response.ErrorListener errorListener) {
+    public StringRequest createStringRequest(int method, final String url, Response.Listener<String> responseListener, Response.ErrorListener errorListener) {
         StringRequest jsonObjectRequest = new StringRequest(
                 method,
                 url,
@@ -394,7 +404,8 @@ public class DataSource {
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         Log.d(LOG_TAG, "Sending request to : " + jsonObjectRequest.getUrl());
-        MainActivity.queue.add(jsonObjectRequest);
+        //MainActivity.queue.add(jsonObjectRequest);
+        return jsonObjectRequest;
         // MainActivity.queue.start();
     }
 
@@ -514,6 +525,136 @@ public class DataSource {
 
     }
 
+    public void loadProfilePicIcon(final Context context, Member target, ImageView viewById, boolean scaleDown) {
+        Log.d(LOG_TAG, "Loading profile pic icon");
+        String url = context.getString(R.string.server_url) + context.getString(R.string.get_profile_pic_url, currentMember.getEmail(), target.getEmail());
+        Log.d(LOG_TAG, "Url: " + url);
+        class MyResponse implements Response.Listener<Bitmap> {
+            private boolean scaleDown;
+            private ImageView view;
+            private Member member;
+
+            MyResponse(Member member, ImageView view, boolean scaleDown) {
+                this.view = view;
+                this.member = member;
+                this.scaleDown = scaleDown;
+            }
+
+            @Override
+            public void onResponse(Bitmap response) {
+                Log.d(LOG_TAG, "Got response for get-profile-pic, response: " + response);
+                member.setProfilePic(response);
+                member.setProfilePicSmall(scaleDown(response, 96f, true));
+                if (member.equals(currentMember)) {
+                    profilePicToolbarIcon = scaleDown(response, toolBarIconSize, true);
+                    profilePicToolbarMenu.setIcon(new BitmapDrawable(context.getResources(), profilePicToolbarIcon));
+                }
+
+                if (view != null)
+                    view.setImageBitmap(scaleDown ? member.getProfilePicSmall() : member.getProfilePic());
+
+            }
+        }
+        ImageRequest request = new ImageRequest(url, new MyResponse(target, viewById, scaleDown), 0, 0, ImageView.ScaleType.CENTER_CROP, null, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(LOG_TAG, "Received error response for get-profile-pic", error);
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                headers.put(mainActivity.getString(R.string.hp_Installation_Id), getInstallationId());
+                return headers;
+            }
+
+            @Override
+            protected Response<Bitmap> parseNetworkResponse(NetworkResponse response) {
+                if (response.statusCode == 200&& response.data!=null) {
+                    Log.d(LOG_TAG, "Received success response from server");
+                    byte[] decodedArray = Base64.decode(response.data, 0);
+                    Bitmap bm = BitmapFactory.decodeByteArray(decodedArray, 0, decodedArray.length);
+                    return Response.success(bm, HttpHeaderParser.parseCacheHeaders(response));
+                } else {
+                    Log.d(LOG_TAG, "Received error response from server, response code: " + response.statusCode);
+                    return Response.error(new VolleyError(response));
+                }
+            }
+        };
+
+        Volley.newRequestQueue(context).add(request);
+    }
+
+
+    public void loadProfilePicIcon(Context context, GetWatchersResponse.Entry target, ImageView viewById, boolean scaleDown) {
+        Log.d(LOG_TAG, "Loading profile pic icon");
+        String url = context.getString(R.string.server_url) + context.getString(R.string.get_profile_pic_url, currentMember.getEmail(), target.getEmail());
+        Log.d(LOG_TAG, "Url: " + url);
+        class MyResponse implements Response.Listener<Bitmap> {
+            private boolean scaleDown;
+            private ImageView view;
+            private GetWatchersResponse.Entry member;
+
+            MyResponse(GetWatchersResponse.Entry member, ImageView view, boolean scaleDown) {
+                this.view = view;
+                this.member = member;
+                this.scaleDown = scaleDown;
+            }
+
+            @Override
+            public void onResponse(Bitmap response) {
+                Log.d(LOG_TAG, "Got response for get-profile-pic, response: " + response);
+                member.setProfilePic(response);
+                member.setProfilePicSmall(scaleDown(response, 96f, true));
+                view.setImageBitmap(scaleDown ? member.getProfilePicSmall() : member.getProfilePic());
+
+            }
+        }
+        ImageRequest request = new ImageRequest(url, new MyResponse(target, viewById, scaleDown), 0, 0, ImageView.ScaleType.CENTER_CROP, null, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(LOG_TAG, "Received error response for get-profile-pic", error);
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                headers.put(mainActivity.getString(R.string.hp_Installation_Id), getInstallationId());
+                return headers;
+            }
+
+            @Override
+            protected Response<Bitmap> parseNetworkResponse(NetworkResponse response) {
+                if (response.statusCode == 200 && response.data!=null) {
+                    Log.d(LOG_TAG, "Received success response from server, response->data: "+response.data);
+                    byte[] decodedArray = Base64.decode(response.data, 0);
+                    Bitmap bm = BitmapFactory.decodeByteArray(decodedArray, 0, decodedArray.length);
+                    return Response.success(bm, HttpHeaderParser.parseCacheHeaders(response));
+                } else {
+                    Log.d(LOG_TAG, "Received error response from server, response code: " + response.statusCode);
+                    return Response.error(new VolleyError(response));
+                }
+            }
+        };
+
+        Volley.newRequestQueue(context).add(request);
+    }
+
+    public Bitmap scaleDown(Bitmap realImage, float maxSize,
+                            boolean filter) {
+        Log.d(LOG_TAG, "Scaling down to maxSize: " + maxSize + ", image: " + realImage);
+        float ratio = Math.min(
+                (float) maxSize / realImage.getWidth(),
+                (float) maxSize / realImage.getHeight());
+        int width = Math.round((float) ratio * realImage.getWidth());
+        int height = Math.round((float) ratio * realImage.getHeight());
+
+        Bitmap newBitmap = Bitmap.createScaledBitmap(realImage, width,
+                height, filter);
+        return newBitmap;
+    }
+
+
     private class MyJsonRequest extends JsonObjectRequest {
 
         private Response response;
@@ -531,5 +672,13 @@ public class DataSource {
         public Response getResponse() {
             return response;
         }
+
+        @Override
+        public Map<String, String> getHeaders() throws AuthFailureError {
+            Map<String, String> headers = new HashMap<>();
+            headers.put(mainActivity.getString(R.string.hp_Installation_Id), getInstallationId());
+            return headers;
+        }
     }
+
 }

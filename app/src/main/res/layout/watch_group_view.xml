@@ -3,51 +3,62 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <RelativeLayout
+        android:id="@+id/watch_profile_pic_RL"
+        android:layout_width="96px"
+        android:layout_height="match_parent"
+        >
+
+        <ImageView
+            android:id="@+id/watch_profile_pic_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
 
     <LinearLayout
         android:id="@+id/textViewLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_toEndOf="@+id/surfaceView"
-        android:layout_toRightOf="@+id/surfaceView"
-        android:layout_toStartOf="@+id/startWatchSwitch"
-        android:layout_toLeftOf="@+id/startWatchSwitch"
-        >
+        android:layout_toEndOf="@+id/watch_profile_pic_RL"
+        android:layout_toRightOf="@+id/watch_profile_pic_RL"
+        android:orientation="vertical">
+
         <TextView
+            android:id="@+id/displayNameText"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:id="@+id/displayNameText"
-            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
-            android:textIsSelectable="false"
             android:ellipsize="end"
             android:maxLines="1"
+            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+            android:textIsSelectable="false"
 
             />
+
         <TextView
+            android:id="@+id/smallStatusText"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:id="@+id/smallStatusText"
-            android:textStyle="normal"
             android:maxLines="1"
+            android:textStyle="normal"
 
             />
     </LinearLayout>
+
     <Switch
+        android:id="@+id/startWatchSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/startWatchSwitch"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:focusable="false"
-        android:gravity="center_vertical"
-        android:foregroundGravity="center_vertical" />
+        android:foregroundGravity="center_vertical"
+        android:gravity="center_vertical" />
 
     <SurfaceView
+        android:id="@+id/surfaceView"
         android:layout_width="15sp"
         android:layout_height="match_parent"
-        android:id="@+id/surfaceView"
-        android:focusable="false"
+        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
+        android:focusable="false" />
 </RelativeLayout>

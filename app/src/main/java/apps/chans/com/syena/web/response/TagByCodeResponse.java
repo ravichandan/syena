@@ -7,11 +7,12 @@ public class TagByCodeResponse {
 	public static final int NO_VALID_MEMBER = 1;
 	public static final int NO_VALID_MEMBER_TXN = 2;
 	public static final int INVALID_EMAIL = 3;
-	public static final int INVALID_TAG_CODE= 4;
-	public static final int INVALID_INSTALLATION_ID= 5;
-	public static final int INACTIVE_MEMBER=6;
-	
+	public static final int INVALID_TAG_CODE = 4;
+	public static final int INVALID_INSTALLATION_ID = 5;
+	public static final int INACTIVE_MEMBER = 6;
+
 	private String email;
+	private String displayName;
 	private int status;
 
 	/**
@@ -27,6 +28,21 @@ public class TagByCodeResponse {
 	 */
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	/**
+	 * @return the displayName
+	 */
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	/**
+	 * @param displayName
+	 *            the displayName to set
+	 */
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
 	}
 
 	/**

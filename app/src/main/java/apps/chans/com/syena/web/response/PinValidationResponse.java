@@ -14,7 +14,7 @@ public class PinValidationResponse {
 	public static final int INVALID_PIN = 5;
 
 	private int status;
-
+	private MemberViewObject memberViewObject;
 	/**
 	 * @return the status
 	 */
@@ -28,5 +28,13 @@ public class PinValidationResponse {
 	 */
 	public void setStatus(int status) {
 		this.status = status;
+	}
+
+	public MemberViewObject getMemberViewObject() {
+		return memberViewObject;
+	}
+
+	public void setMemberViewObject(MemberViewObject memberViewObject) {
+		this.memberViewObject = memberViewObject;
 	}
 }

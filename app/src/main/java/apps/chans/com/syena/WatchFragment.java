@@ -1,7 +1,6 @@
 package apps.chans.com.syena;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -21,7 +20,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
-import android.widget.AdapterView;
 import android.widget.ExpandableListView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -190,7 +188,7 @@ public class WatchFragment extends Fragment implements SensorEventListener {
         adapter = new WatchExpandableAdapter(this, R.layout.watch_group_view, R.layout.watch_list_view);
 
         expandableListView.setAdapter(adapter);
-        expandableListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+       /* expandableListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(LOG_TAG, "In Item Long click, position: " + position + ", id: " + id);
@@ -199,7 +197,7 @@ public class WatchFragment extends Fragment implements SensorEventListener {
                 startActivity(memberProfileActivity);
                 return true;
             }
-        });
+        });*/
         for (int i = 0; i < adapter.getGroupCount(); i++) {
             expandableListView.collapseGroup(i);
         }
@@ -268,7 +266,7 @@ public class WatchFragment extends Fragment implements SensorEventListener {
 
     public void setPointer(Member target) {
         Watch currentWatch = dataSource.currentMember.getWatchMap().get(target);
-        if (!currentWatch.isActive() || !currentWatch.getViewHolder().childViewExpanded)
+        if (!currentWatch.isActive() || currentWatch.getViewHolder() == null || !currentWatch.getViewHolder().childViewExpanded)
             return;
         double lat1 = dataSource.currentMember.getLatitude();
         double lat2 = target.getLatitude();
@@ -333,7 +331,12 @@ public class WatchFragment extends Fragment implements SensorEventListener {
 
         @Override
         public void onLocationChanged(Location location) {
+
             Log.d(LOG_TAG, "onLocationChanged : " + location.getLatitude() + ", " + location.getLongitude() + ", " + location.getAltitude());
+            if(dataSource.currentMember==null){
+                Log.d(LOG_TAG,"Current member in datasource is null, returning..");
+                return;
+            }
             dataSource.currentMember.setLatitude(location.getLatitude());
             dataSource.currentMember.setLongitude(location.getLongitude());
 

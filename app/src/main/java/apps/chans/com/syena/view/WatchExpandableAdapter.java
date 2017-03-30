@@ -1,6 +1,7 @@
 package apps.chans.com.syena.view;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +26,7 @@ import org.apache.commons.lang.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 
+import apps.chans.com.syena.FriendProfileActivity;
 import apps.chans.com.syena.LocationFetchRestTask;
 import apps.chans.com.syena.MainActivity;
 import apps.chans.com.syena.R;
@@ -114,6 +116,23 @@ public class WatchExpandableAdapter extends BaseExpandableListAdapter {
             watch.initViewHolder(convertView);
         }
         convertView = watch.getViewHolder().view;
+        ImageView profilePicIcon = (ImageView) convertView.findViewById(R.id.watch_profile_pic_icon);
+        if (watch.getTarget().getProfilePic() == null) {
+            dataSource.loadProfilePicIcon(mainActivity.getContext(), watch.getTarget(), profilePicIcon, true);
+        }
+        profilePicIcon.setImageBitmap(watch.getTarget().getProfilePicSmall());
+        profilePicIcon.setTag(groupPosition);
+        profilePicIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int position = (int) v.getTag();
+                Log.d(LOG_TAG, "In profile pic icon onClick, position: " + position);
+                Intent memberProfileActivity = new Intent(mainActivity.getContext(), FriendProfileActivity.class);
+                memberProfileActivity.putExtra("PROFILE_WATCH_POSITION", position);
+                mainActivity.startActivity(memberProfileActivity);
+                //return true;
+            }
+        });
         Log.d(LOG_TAG, watch + ", watch status: " + watch.isActive() + ", switch checked: " + watch.getViewHolder().startSwitch.isChecked());
         Switch startSwitch = watch.getViewHolder().startSwitch;
         startSwitch.setChecked(watch.isActive());
@@ -141,7 +160,7 @@ public class WatchExpandableAdapter extends BaseExpandableListAdapter {
 
         TextView smallStatusText = watch.getViewHolder().statusTextView;
         smallStatusText.setText(watch.getWatchStatus().getMessage());
-        watch.getViewHolder().childViewExpanded =isExpanded;
+        watch.getViewHolder().childViewExpanded = isExpanded;
         return convertView;
     }
 

@@ -1,10 +1,12 @@
 package apps.chans.com.syena.view;
 
+import android.content.Intent;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -17,6 +19,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.JsonObjectRequest;
 
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,6 +30,7 @@ import java.util.Map;
 
 import apps.chans.com.syena.MainActivity;
 import apps.chans.com.syena.R;
+import apps.chans.com.syena.WatcherProfileActivity;
 import apps.chans.com.syena.WatchersFragment;
 import apps.chans.com.syena.datasource.DataSource;
 import apps.chans.com.syena.web.request.WatchAccessRequest;
@@ -42,21 +46,22 @@ public class WatchersExpandableListAdapter extends BaseExpandableListAdapter {
 
     private int groupViewId, listViewId;
     private WatchersFragment watchersActivity;
-    private GetWatchersResponse getWatchersResponse;
+    //private GetWatchersResponse getWatchersResponse;
     private String LOG_TAG = getClass().getSimpleName();
+    private DataSource dataSource;
 
-    public WatchersExpandableListAdapter(WatchersFragment watchersActivity, int watchers_group_view, int watchers_list_view, GetWatchersResponse getWatchersResponse) {
+    public WatchersExpandableListAdapter(WatchersFragment watchersActivity, int watchers_group_view, int watchers_list_view) {
         Log.d(LOG_TAG, "In constructor");
         this.watchersActivity = watchersActivity;
         groupViewId = watchers_group_view;
         listViewId = watchers_list_view;
-        this.getWatchersResponse = getWatchersResponse;
+        dataSource = DataSource.instance;
     }
 
     @Override
     public int getGroupCount() {
-        if (getWatchersResponse == null) return 0;
-        int count = getWatchersResponse.getWatchers().size();
+        if (dataSource.getWatchersResponse() == null) return 0;
+        int count = dataSource.getWatchersResponse().getWatchers().size();
         Log.d(LOG_TAG, "Group size : " + count);
         return count;
     }
@@ -70,13 +75,13 @@ public class WatchersExpandableListAdapter extends BaseExpandableListAdapter {
     @Override
     public Object getGroup(int groupPosition) {
         Log.d(LOG_TAG, "In getGroup");
-        return getWatchersResponse.getWatchers().get(groupPosition);
+        return dataSource.getWatchersResponse().getWatchers().get(groupPosition);
     }
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
         Log.d(LOG_TAG, "In getChild");
-        return getWatchersResponse.getWatchers().get(groupPosition);
+        return dataSource.getWatchersResponse().getWatchers().get(groupPosition);
     }
 
     @Override
@@ -97,7 +102,7 @@ public class WatchersExpandableListAdapter extends BaseExpandableListAdapter {
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
         Log.d(LOG_TAG, "In getGroupView, groupPosition: " + groupPosition);
-        final GetWatchersResponse.Entry watcher = getWatchersResponse.getWatchers().get(groupPosition);
+        final GetWatchersResponse.Entry watcher = dataSource.getWatchersResponse().getWatchers().get(groupPosition);
         ViewHolder vh = null;
         if (convertView == null) {
             Log.d(LOG_TAG, "convertView is null");
@@ -107,19 +112,42 @@ public class WatchersExpandableListAdapter extends BaseExpandableListAdapter {
             TextView tvWatchersGroupDisplay = (TextView) convertView.findViewById(R.id.tv_watchers_group_display);
             TextView tvWatchersGroupDesc = (TextView) convertView.findViewById(R.id.tv_watchers_group_desc);
             Switch watcherEnabledSwitch = (Switch) convertView.findViewById(R.id.watcher_enabled_switch);
+            ImageView watcherProfilePicIcon = (ImageView) convertView.findViewById(R.id.watcher_profile_pic_icon);
             vh.tvWatchersGroupDesc = tvWatchersGroupDesc;
             vh.tvWatchersGroupDisplay = tvWatchersGroupDisplay;
             vh.watcherEnabledSwitch = watcherEnabledSwitch;
+            vh.profilePicIcon = watcherProfilePicIcon;
         } else {
             Log.d(LOG_TAG, "convertView is not null");
             vh = (ViewHolder) convertView.getTag();
         }
-        Log.d(LOG_TAG, "Setting data for this item:");
+        Log.d(LOG_TAG, "....Setting data for this item:");
         Log.d(LOG_TAG, "Name : " + watcher.getName());
         Log.d(LOG_TAG, "Email : " + watcher.getEmail());
         Log.d(LOG_TAG, "isEnabled: " + watcher.isEnabled());
-        vh.tvWatchersGroupDisplay.setText(watcher.getName());
-        vh.tvWatchersGroupDesc.setText(watcher.getEmail());
+        if (watcher.getProfilePicSmall() != null)
+            vh.profilePicIcon.setImageBitmap(watcher.getProfilePicSmall());
+        else
+            dataSource.loadProfilePicIcon(watchersActivity.getContext(), watcher, vh.profilePicIcon, true);
+        vh.profilePicIcon.setTag(groupPosition);
+        vh.profilePicIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int position = (int) v.getTag();
+                Log.d(LOG_TAG, "In profile pic icon onClick, position: " + position);
+                Intent watcherProfileActivity = new Intent(watchersActivity.getContext(), WatcherProfileActivity.class);
+                watcherProfileActivity.putExtra("PROFILE_WATCHER_POSITION", position);
+                watchersActivity.startActivity(watcherProfileActivity);
+            }
+        });
+        if (StringUtils.isBlank(watcher.getName()))
+            vh.tvWatchersGroupDisplay.setText(watcher.getEmail());
+        else vh.tvWatchersGroupDisplay.setText(watcher.getName());
+        if (watcher.getStatus().equalsIgnoreCase("IN_ACTIVE")) {
+            vh.tvWatchersGroupDesc.setText("Not watching");
+        } else {
+            vh.tvWatchersGroupDesc.setText("Watching since: " + watcher.getWatchingSince());
+        }
         vh.watcherEnabledSwitch.setChecked(watcher.isEnabled());
         vh.watcherEnabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -187,7 +215,7 @@ public class WatchersExpandableListAdapter extends BaseExpandableListAdapter {
             convertView = watchersActivity.getLayoutInflater(null).inflate(listViewId, null);
         }
         TextView tvWatchersListDesc = (TextView) convertView.findViewById(R.id.tv_watchers_list_desc);
-        tvWatchersListDesc.setText(getWatchersResponse.getWatchers().get(groupPosition).getEmail());
+        tvWatchersListDesc.setText(dataSource.getWatchersResponse().getWatchers().get(groupPosition).getEmail());
         return convertView;
 
     }
@@ -201,5 +229,6 @@ public class WatchersExpandableListAdapter extends BaseExpandableListAdapter {
         TextView tvWatchersGroupDisplay;
         TextView tvWatchersGroupDesc;
         Switch watcherEnabledSwitch;
+        ImageView profilePicIcon;
     }
 }

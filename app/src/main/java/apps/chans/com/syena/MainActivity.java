@@ -2,6 +2,7 @@ package apps.chans.com.syena;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.TabLayout;
@@ -635,12 +636,13 @@ public class MainActivity extends AppCompatActivity {
         loggedInAlready = true;
         if (dataSource.currentMember == null)
             dataSource.currentMember = new Member(dataSource.getEmail());
+        dataSource.loadProfilePicIcon(this.getApplicationContext(),dataSource.currentMember,null,true);
 
         setContentView(R.layout.syena_main);
         //activity_main = (SwipeRefreshLayout) findViewById(R.id.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.syenaMainToolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
         if (watchFragment == null) watchFragment = new WatchFragment();
@@ -735,8 +737,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d(LOG_TAG,"In onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.toolbar_menu, menu);
-
+        dataSource.profilePicToolbarMenu = menu.findItem(R.id.profileMenu);
+        if (dataSource.profilePicToolbarIcon != null)
+            dataSource.profilePicToolbarMenu.setIcon(new BitmapDrawable(getResources(), dataSource.profilePicToolbarIcon));
         return true;
     }
 

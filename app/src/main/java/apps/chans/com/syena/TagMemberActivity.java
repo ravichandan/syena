@@ -6,11 +6,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,8 +21,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -46,15 +52,28 @@ public class TagMemberActivity extends AppCompatActivity {
     private Intent result;
     private DataSource dataSource = DataSource.instance;
     private String LOG_TAG = TagMemberActivity.class.getSimpleName();
-
+    private RequestQueue queue;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.tag_member_activity);
+        queue= Volley.newRequestQueue(this);
         Toolbar toolbar = (Toolbar) findViewById(R.id.tagMemberActivityToolbar);
         setSupportActionBar(toolbar);
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Log.d(LOG_TAG, "Home button clicked. Going to previous activity");
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     public void generateCode(View view) {
@@ -73,7 +92,7 @@ public class TagMemberActivity extends AppCompatActivity {
         });
         String url = getString(R.string.server_url) + getString(R.string.get_tag_code_url, dataSource.getEmail());
         Log.d(LOG_TAG, "Sending request to url: " + url);
-        dataSource.sendStringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+        StringRequest stringRequest=dataSource.createStringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(LOG_TAG, "Received response from server " + response);
@@ -125,6 +144,8 @@ public class TagMemberActivity extends AppCompatActivity {
                 tagCodeResponseLabel.setText(error.getLocalizedMessage());
             }
         });
+
+        queue.add(stringRequest);
     }
 
     public void scanCode(View view) {
@@ -155,7 +176,7 @@ public class TagMemberActivity extends AppCompatActivity {
                 tagByCodeRequest.setTagCode(scanCodeText.getText().toString());
                 String url = getString(R.string.server_url) + getString(R.string.post_tag_url, dataSource.getEmail());
                 Log.d(LOG_TAG, "Sending request to url: " + url);
-                dataSource.sendJsonRequest(Request.Method.POST, url, tagByCodeRequest, new Response.Listener<JSONObject>() {
+                JsonObjectRequest request=dataSource.createJsonRequest(Request.Method.POST, url, tagByCodeRequest, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
 
@@ -209,7 +230,7 @@ public class TagMemberActivity extends AppCompatActivity {
                                     break;
                             }
                         } catch (IOException e) {
-                            Log.d(LOG_TAG ,"TagCodeGenerationResponse-ERROR occurred while handling response", e);
+                            Log.d(LOG_TAG, "TagCodeGenerationResponse-ERROR occurred while handling response", e);
                             tagByCodeResponseLabel.setText(getString(R.string.err_text_system_error));
                             submitButton.setEnabled(true);
                             return;
@@ -218,13 +239,14 @@ public class TagMemberActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d(LOG_TAG ,"TagCodeGenerationResponse-ERROR response received", error);
+                        Log.d(LOG_TAG, "TagCodeGenerationResponse-ERROR response received", error);
                         TextView tagByCodeResponseLabel = (TextView) popupView.findViewById(R.id.tagByCodeResponseLabel);
                         tagByCodeResponseLabel.setText(error.getLocalizedMessage());
                         submitButton.setEnabled(true);
 
                     }
                 });
+                queue.add(request);
             }
         });
     }

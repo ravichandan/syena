@@ -1,5 +1,7 @@
 package apps.chans.com.syena.entities;
 
+import android.graphics.Bitmap;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +21,8 @@ public class Member implements Serializable{
     private double altitude;
     private float degree;
     private Map<Member, Watch> watchMap;
-
+    private Bitmap profilePic;
+    private Bitmap profilePicSmall;
     public Member(String email) {
         this.email = email;
         watchMap = new HashMap<Member, Watch>();
@@ -85,6 +88,22 @@ public class Member implements Serializable{
 
     public void setDegree(float degree) {
         this.degree = degree;
+    }
+
+    public Bitmap getProfilePic() {
+        return profilePic;
+    }
+
+    public void setProfilePic(Bitmap profilePic) {
+        this.profilePic = profilePic;
+    }
+
+    public Bitmap getProfilePicSmall() {
+        return profilePicSmall;
+    }
+
+    public void setProfilePicSmall(Bitmap profilePicSmall) {
+        this.profilePicSmall = profilePicSmall;
     }
 
     @Override

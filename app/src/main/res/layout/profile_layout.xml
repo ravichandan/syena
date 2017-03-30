@@ -50,6 +50,7 @@
                         android:id="@+id/profileDisplayNameValueET"
                         android:layout_width="200sp"
                         android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
                         android:background="@drawable/rounded_corners_bg" />
                 </TableRow>
             </TableLayout>
@@ -63,6 +64,7 @@
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
         <android.support.design.widget.CollapsingToolbarLayout
+            android:id="@+id/profileCollapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fitsSystemWindows="true"
