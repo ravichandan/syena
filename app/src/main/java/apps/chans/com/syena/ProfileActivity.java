@@ -29,6 +29,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import apps.chans.com.syena.datasource.DataSource;
+import apps.chans.com.syena.web.response.CloudinaryConfigResponse;
 
 /**
  * Created by sitir on 25-03-2017.
@@ -90,6 +92,37 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d(LOG_TAG, "In onClick, to upload new image, starting image selection intent");
+                String url=getString(R.string.server_url)+getString(R.string.cloudinary_config_url);
+                StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d(LOG_TAG, "In onResponse, response: " + response);
+                        ObjectMapper mapper = new ObjectMapper();
+                        try {
+                            CloudinaryConfigResponse cloudinaryConfigResponse= mapper.readValue(response, CloudinaryConfigResponse.class);
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d(LOG_TAG, "Error response received", error);
+                    }
+                })
+
+                {
+
+                    @Override
+                    public Map<String, String> getHeaders() throws AuthFailureError {
+
+                        Map<String, String> headers = new HashMap<>();
+                        headers.put(getString(R.string.hp_Installation_Id), dataSource.getInstallationId());
+                        return headers;
+                    }
+                };
+                queue.add(request);
                 Intent intent = new Intent();
                 intent.setType("image/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);

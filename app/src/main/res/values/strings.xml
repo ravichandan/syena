@@ -46,7 +46,7 @@
     <string name="email_qp">requester</string>
 
     <!--urls-->
-    <string name="server_url">http://59.92.245.240:7979/syena-system</string>
+    <string name="server_url">http://117.201.219.198:7979/syena-system</string>
     <string name="get_or_create_url">/member/get-or-create?requester=%1$s</string>
     <string name="location_update_url">/member/location</string>
     <string name="get_tag_code_url">/member/tag-code?requester=%1$s</string>
@@ -64,7 +64,7 @@
     <string name="delete_watch_url">/member/delete-watch?requester=%1$s&amp;target=%2$s</string>
     <string name="upload_pic_url">/member/upload-pic?requester=%1$s</string>
     <string name="get_profile_pic_url">/member/get-profile-pic?requester=%1$s&amp;target=%2$s</string>
-
+    <string name="cloudinary_config_url">/member/get_cloudinary_config</string>
 
 
 </resources>

@@ -43,6 +43,8 @@ dependencies {
     compile 'com.google.firebase:firebase-messaging:10.0.1'
     compile 'com.google.firebase:firebase-core:10.0.1'
     compile 'com.google.android.gms:play-services:10.0.1'
+    // https://mvnrepository.com/artifact/com.cloudinary/cloudinary-android
+    compile group: 'com.cloudinary', name: 'cloudinary-android', version: '1.9.1'
 
     // https://mvnrepository.com/artifact/org.khronos/opengl-api
     //compile group: 'org.khronos', name: 'opengl-api', version: 'gl1.1-android-2.1_r1'
