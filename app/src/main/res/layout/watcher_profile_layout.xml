@@ -18,14 +18,13 @@
             app:contentScrim="?attr/colorPrimary"
             app:expandedTitleMarginEnd="64dp"
             app:expandedTitleMarginStart="48dp"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed"
-
-            >
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
             <ImageView
                 android:id="@+id/watcherProfilePictureIV"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:contentDescription="@string/profile_pic_content_desc"
                 android:fitsSystemWindows="true"
                 android:scaleType="centerCrop"
                 android:src="@drawable/small_size_one"
@@ -50,94 +49,74 @@
         android:layout_marginTop="30sp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <RelativeLayout
-            android:id="@+id/watcher_profile_layout_parentRL"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10sp"
+            android:dividerPadding="3sp"
+            android:stretchColumns="*">
 
-            <TableLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:dividerPadding="50sp" android:showDividers="middle">
+            <TableRow>
 
-                <TableRow>
-                    <TextView
-                        android:id="@+id/watcherEmailLabelTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignBaseline="@+id/watcherEmailValueTV"
-                        android:layout_alignBottom="@+id/watcherEmailValueTV"
-                        android:layout_alignParentStart="true"
-                        android:layout_marginStart="31dp"
-                        android:text="@string/email_label" />
+                <TextView
+                    android:id="@+id/watcherEmailLabelTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/email_label" />
 
-                    <TextView
-                        android:id="@+id/watcherEmailValueTV"
-                        android:layout_width="200sp"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_alignParentTop="true"
-                        android:layout_marginEnd="11sp" />
-                </TableRow>
+                <TextView
+                    android:id="@+id/watcherEmailValueTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </TableRow>
 
-                <TableRow>
-                    <TextView
-                        android:id="@+id/watcherDisplayNameLabelTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignBaseline="@+id/watcherDisplayNameValueTV"
-                        android:layout_alignBottom="@+id/watcherDisplayNameValueTV"
-                        android:layout_alignParentStart="true"
-                        android:layout_marginStart="31dp"
-                        android:text="@string/display_name_string" />
+            <TableRow>
 
-                    <TextView
-                        android:id="@+id/watcherDisplayNameValueTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="31dp"
-                        android:layout_toEndOf="@+id/watcherDisplayNameLabelTV" />
-                </TableRow>
+                <TextView
+                    android:id="@+id/watcherDisplayNameLabelTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
 
-                <TableRow>
-                    <TextView
-                        android:id="@+id/watcherStatusLabelTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignBaseline="@+id/watcherStatusValueTV"
-                        android:layout_alignBottom="@+id/watcherStatusValueTV"
-                        android:layout_alignParentStart="true"
-                        android:layout_marginStart="31dp"
-                        android:text="@string/watcher_status_label_string" />
+                    android:text="@string/display_name_string" />
 
-                    <TextView
-                        android:id="@+id/watcherStatusValueTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="31dp"
-                        android:layout_toEndOf="@+id/watcherStatusLabelTV" />
-                </TableRow>
+                <TextView
+                    android:id="@+id/watcherDisplayNameValueTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                   />
+            </TableRow>
 
-                <TableRow>
-                    <TextView
-                        android:id="@+id/watcherWatchingSinceLabelTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignBaseline="@+id/watcherWatchingSinceValueTV"
-                        android:layout_alignBottom="@+id/watcherWatchingSinceValueTV"
-                        android:layout_alignParentStart="true"
-                        android:layout_marginStart="31dp"
-                        android:text="@string/watcher_watching_since_label_string" />
+            <TableRow>
 
-                    <TextView
-                        android:id="@+id/watcherWatchingSinceValueTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="31dp"
-                        android:layout_toEndOf="@+id/watcherWatchingSinceLabelTV" />
-                </TableRow>
+                <TextView
+                    android:id="@+id/watcherStatusLabelTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/watcher_status_label_string" />
 
-            </TableLayout>
-        </RelativeLayout>
+                <TextView
+                    android:id="@+id/watcherStatusValueTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                     />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    android:id="@+id/watcherWatchingSinceLabelTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/watcher_watching_since_label_string" />
+
+                <TextView
+                    android:id="@+id/watcherWatchingSinceValueTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                   />
+            </TableRow>
+
+        </TableLayout>
     </android.support.v4.widget.NestedScrollView>
 
 </android.support.design.widget.CoordinatorLayout>

@@ -37,6 +37,7 @@
     <string name="display_name_string">Display name</string>
     <string name="watcher_status_label_string">Status</string>
     <string name="watcher_watching_since_label_string">Watching Since</string>
+    <string name="profile_pic_content_desc">Profile pic</string>
 
 
     <!--params-->
