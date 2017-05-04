@@ -193,6 +193,8 @@ public class MainActivity extends AppCompatActivity {
         final ObjectMapper mapper = new ObjectMapper();
         Log.d(LOG_TAG, "In autoLogin :   " + email);
         String url = getString(R.string.server_url) + getString(R.string.get_or_create_url, email);
+        Log.d(LOG_TAG, "Url; "+url);
+
         StringRequest jsonObjectRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -235,6 +237,8 @@ public class MainActivity extends AppCompatActivity {
                             showPinPopup(R.layout.pin_generate_popup, verifyResponse.getEmail());
                             break;
                         case EmailVerifyResponse.SUCCESS:
+                            welcome();
+
                             break;
                         case EmailVerifyResponse.INVALID_EMAIL:
                             Log.d(LOG_TAG, "EmailVerifyResponse: " + EmailVerifyResponse.INVALID_EMAIL);
@@ -257,7 +261,6 @@ public class MainActivity extends AppCompatActivity {
                     //recreate();
                     return;
                 }
-                welcome();
             }
         }, new Response.ErrorListener() {
             @Override
@@ -284,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
                 return headers;
             }
         };
-        Log.d(LOG_TAG, "Sending autologin request for email");
+        Log.d(LOG_TAG, "Sending autologin request for email "+url);
 
         jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
                 requestTimeOut,
@@ -446,7 +449,7 @@ public class MainActivity extends AppCompatActivity {
             bw.flush();
             bw.close();
             br = new BufferedReader(new FileReader(emailFile));
-            Log.d(LOG_TAG, "Email read from file" + br.readLine());
+            Log.d(LOG_TAG, "Email read from file: " + br.readLine());
             br.close();
             if (!StringUtils.isBlank(email))
                 dataSource.setEmail(email);
