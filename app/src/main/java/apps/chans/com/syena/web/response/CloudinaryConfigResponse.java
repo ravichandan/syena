@@ -12,7 +12,7 @@ public class CloudinaryConfigResponse {
 
     private String secret;
 
-    private boolean timeStamp;
+    private long timeStamp;
 
     public String getCloudName() {
         return cloudName;
@@ -38,11 +38,11 @@ public class CloudinaryConfigResponse {
         this.secret = secret;
     }
 
-    public boolean isTimeStamp() {
+    public long getTimeStamp() {
         return timeStamp;
     }
 
-    public void setTimeStamp(boolean timeStamp) {
+    public void setTimeStamp(long timeStamp) {
         this.timeStamp = timeStamp;
     }
 }

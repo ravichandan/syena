@@ -29,6 +29,8 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayOutputStream;
@@ -92,7 +94,7 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d(LOG_TAG, "In onClick, to upload new image, starting image selection intent");
-                String url=getString(R.string.server_url)+getString(R.string.cloudinary_config_url);
+                /*String url=getString(R.string.server_url)+getString(R.string.cloudinary_config_url);
                 StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -101,6 +103,9 @@ public class ProfileActivity extends AppCompatActivity {
                         try {
                             CloudinaryConfigResponse cloudinaryConfigResponse= mapper.readValue(response, CloudinaryConfigResponse.class);
 
+
+                            Cloudinary cloudinary = new Cloudinary();
+                            cloudinary.uploader().upload(inputStream, ObjectUtils.asMap("public_id", cloudinaryConfigResponse.getKey(), "signature", cloudinaryConfigResponse.getSecret(), "timestamp", cloudinaryConfigResponse.getTimeStamp(), "api_key", cloudinaryConfigResponse.getCloudName()))
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -122,7 +127,7 @@ public class ProfileActivity extends AppCompatActivity {
                         return headers;
                     }
                 };
-                queue.add(request);
+                queue.add(request);*/
                 Intent intent = new Intent();
                 intent.setType("image/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);

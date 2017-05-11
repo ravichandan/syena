@@ -17,7 +17,7 @@
         android:id="@+id/configImage"
         android:layout_width="40sp"
         android:layout_height="40sp"
-        android:src="@mipmap/config_icon"
+        android:src="@mipmap/ic_config_icon"
         android:onClick="configureWatch"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true" />
